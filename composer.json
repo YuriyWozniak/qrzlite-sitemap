@@ -47,6 +47,15 @@
             "@joomla",
             "phpunit"
         ],
+        "test:performance": [
+            "@joomla",
+            "phpunit --testsuite performance"
+        ],
+        "benchmark": [
+            "@joomla",
+            "@putenv QRZLITE_BENCHMARK=1",
+            "phpunit --testsuite performance --filter BenchmarkTest"
+        ],
         "coverage": [
             "@joomla",
             "@php -d pcov.enabled=1 vendor/bin/phpunit --coverage-text --coverage-html .cache/coverage"
@@ -59,6 +68,8 @@
         "lint:html": "Render the layouts and stylesheets, then check their HTML and CSS (needs npm install)",
         "fix": "Fix the code style",
         "test": "Unit tests",
+        "test:performance": "Performance tests: CPU time and memory of generation against budgets (PHP 8.2+)",
+        "benchmark": "CPU time and memory of generation at 1,000 to 100,000 articles (.cache/benchmark.md)",
         "coverage": "Unit tests with a coverage report (needs pcov or Xdebug)",
         "build": "Build dist/pkg_qrzlitesitemap-<version>.zip"
     },

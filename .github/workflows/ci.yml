@@ -79,6 +79,8 @@ jobs:
       - run: php build/joomla.php ${{ matrix.joomla }}
       - name: Unit tests
         run: JOOMLA_VERSION=${{ matrix.joomla }} vendor/bin/phpunit
+      - name: Performance tests (PHP 8.2 and later)
+        run: JOOMLA_VERSION=${{ matrix.joomla }} vendor/bin/phpunit --testsuite performance
       - name: Build package
         run: php build/build.php
 
@@ -147,6 +149,11 @@ jobs:
         run: |
           version=$(php -r 'echo simplexml_load_file("src/pkg_qrzlitesitemap.xml")->version;')
           bash tests/Integration/smoke.sh site "dist/pkg_qrzlitesitemap-$version.zip" http://127.0.0.1:8765
+      - name: Measure generation on a large site
+        run: |
+          command -v /usr/bin/time > /dev/null || sudo apt-get install -y -qq time
+          echo "### Generation on a large site: Joomla ${{ matrix.joomla }}, PHP ${{ matrix.php }}" >> "$GITHUB_STEP_SUMMARY"
+          bash tests/Integration/benchmark.sh site 1000 10000 50000 100000 | tee -a "$GITHUB_STEP_SUMMARY"
 
   # The one check the ruleset of main requires, so the matrices can change without editing the ruleset.
   # It runs even when a job fails, because a skipped required check counts as passed.

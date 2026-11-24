@@ -98,6 +98,8 @@ composer lint        # PHP: syntax (all PHP versions in CI), code style, static 
 composer lint:html   # HTML and CSS of the rendered layouts and of the XSL browser view
 composer fix         # fix the code style
 composer coverage    # unit tests with a coverage report in .cache/coverage (needs pcov or Xdebug)
+composer test:performance  # CPU time and memory of generation against budgets (PHP 8.2+)
+composer benchmark   # CPU time and memory at 1,000 to 100,000 articles, in .cache/benchmark.md
 composer build       # dist/pkg_qrzlitesitemap-<version>.zip
 ```
 
@@ -109,6 +111,14 @@ model, view, layout, router), the console command, the scheduled task, the plugi
 package installer script. Those run against the real Joomla libraries, which `composer test` fetches into
 `.cache/joomla` (Joomla 5.4 by default; `JOOMLA_VERSION=6.2.1` for Joomla 6), with an SQLite database in memory.
 CI runs them on PHP 8.1–8.5 with Joomla 5.4 and on PHP 8.3–8.5 with Joomla 6.2, and requires 98% statement coverage.
+
+**Performance tests** (`tests/Performance`) measure CPU time and PHP memory per URL: a whole generation of a
+20,000-article site through the component, and the core alone with 120,000 URLs. They fail when either goes over a
+budget several times what a slow machine needs, or when the cost per URL grows with the size of the site or of a
+file. Routing there is a cheap stand-in for Joomla's site router, so they measure the component's own cost;
+`composer benchmark` reports the same at several sizes. In CI, `tests/Integration/benchmark.sh` measures the console
+command on a real Joomla site with up to 100,000 articles, the site router included, and adds the table to the
+job's summary.
 
 **Linters**: PHP CS Fixer (PSR-12 with Joomla's additions), PHPStan level 6 against Joomla 5.4 and 6.2,
 html-validate for the HTML that the layouts and the XSL stylesheets produce, and Stylelint for the stylesheets' CSS.
