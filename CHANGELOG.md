@@ -13,3 +13,4 @@ First version.
 - Options saved empty stay empty: *None* for `changefreq` and `priority` leaves them out, an emptied URL filter
   filters nothing. A `--options` file can turn options off with `""`.
 - Unit tests for the whole component against Joomla 5.4 and 6.2; PHP, HTML and CSS linters.
+- Performance tests and a benchmark of CPU time and memory, also on a real Joomla site with 100,000 articles.
