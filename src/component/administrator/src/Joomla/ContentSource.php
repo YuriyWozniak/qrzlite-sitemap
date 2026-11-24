@@ -6,7 +6,7 @@
  * @license     GNU General Public License version 2 or later; see LICENSE
  */
 
-namespace QrzLite\Component\Sitemap\Administrator\Service;
+namespace QrzLite\Component\Sitemap\Administrator\Joomla;
 
 \defined('_JEXEC') or die;
 
@@ -104,7 +104,6 @@ final class ContentSource
 
     private function query(): QueryInterface
     {
-        // createQuery() replaces getQuery(true) since Joomla 5.
-        return method_exists($this->db, 'createQuery') ? $this->db->createQuery() : $this->db->getQuery(true);
+        return Queries::create($this->db);
     }
 }

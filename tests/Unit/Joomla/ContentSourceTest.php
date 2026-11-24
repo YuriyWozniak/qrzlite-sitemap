@@ -1,8 +1,8 @@
 <?php
 
-namespace QrzLite\Tests\Unit\Service;
+namespace QrzLite\Tests\Unit\Joomla;
 
-use QrzLite\Component\Sitemap\Administrator\Service\ContentSource;
+use QrzLite\Component\Sitemap\Administrator\Joomla\ContentSource;
 use QrzLite\Tests\Support\JoomlaTestCase;
 
 final class ContentSourceTest extends JoomlaTestCase

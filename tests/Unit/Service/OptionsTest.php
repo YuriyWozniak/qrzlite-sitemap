@@ -5,7 +5,7 @@ namespace QrzLite\Tests\Unit\Service;
 use Joomla\Registry\Registry;
 use PHPUnit\Framework\TestCase;
 use QrzLite\Component\Sitemap\Administrator\Service\Options;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\Publisher;
+use QrzLite\Component\Sitemap\Administrator\Storage\Publisher;
 
 final class OptionsTest extends TestCase
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace QrzLite\Tests\Unit\Service;
+namespace QrzLite\Tests\Unit\Joomla;
 
 use Joomla\CMS\Application\AdministratorApplication;
 use PHPUnit\Framework\Attributes\DataProvider;
-use QrzLite\Component\Sitemap\Administrator\Service\SiteEnvironment;
+use QrzLite\Component\Sitemap\Administrator\Joomla\SiteEnvironment;
 use QrzLite\Tests\Support\JoomlaTestCase;
 
 final class SiteEnvironmentTest extends JoomlaTestCase

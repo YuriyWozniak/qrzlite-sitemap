@@ -54,15 +54,15 @@ return new class () implements ServiceProviderInterface {
                         return true;
                     }
 
-                    $db    = $this->db;
-                    $query = (method_exists($db, 'createQuery') ? $db->createQuery() : $db->getQuery(true))
-                        ->update($db->quoteName('#__extensions'))
-                        ->set($db->quoteName('enabled') . ' = 1')
-                        ->where($db->quoteName('type') . ' = ' . $db->quote('plugin'))
-                        ->where($db->quoteName('element') . ' = ' . $db->quote('qrzlitesitemap'))
-                        ->where($db->quoteName('folder') . ' IN (' . $db->quote('console') . ',' . $db->quote('task') . ')');
-
-                    $db->setQuery($query)->execute();
+                    // A plain statement: this script runs outside the component and can't use its classes.
+                    $db = $this->db;
+                    $db->setQuery(
+                        'UPDATE ' . $db->quoteName('#__extensions')
+                        . ' SET ' . $db->quoteName('enabled') . ' = 1'
+                        . ' WHERE ' . $db->quoteName('type') . ' = ' . $db->quote('plugin')
+                        . ' AND ' . $db->quoteName('element') . ' = ' . $db->quote('qrzlitesitemap')
+                        . ' AND ' . $db->quoteName('folder') . ' IN (' . $db->quote('console') . ', ' . $db->quote('task') . ')'
+                    )->execute();
 
                     return true;
                 }

@@ -1,9 +1,9 @@
 <?php
 
-namespace QrzLite\Tests\Unit;
+namespace QrzLite\Tests\Unit\Storage;
 
 use PHPUnit\Framework\TestCase;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\FileWriter;
+use QrzLite\Component\Sitemap\Administrator\Storage\FileWriter;
 
 /**
  * Failures of the file writer that do not depend on file permissions (those are in PublisherTest).

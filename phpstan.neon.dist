@@ -16,6 +16,7 @@ parameters:
         -
             identifier: function.alreadyNarrowedType
             message: '#method_exists\(\) with Joomla\\Database\\DatabaseInterface and .createQuery.#'
+            path: src/component/administrator/src/Joomla/Queries.php
         # Layouts run inside the view object and use its protected properties.
         -
             identifier: property.protected

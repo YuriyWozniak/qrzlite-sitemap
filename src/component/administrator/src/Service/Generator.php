@@ -11,14 +11,18 @@ namespace QrzLite\Component\Sitemap\Administrator\Service;
 \defined('_JEXEC') or die;
 
 use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
+use QrzLite\Component\Sitemap\Administrator\Joomla\ContentSource;
+use QrzLite\Component\Sitemap\Administrator\Joomla\RouteBuilder;
+use QrzLite\Component\Sitemap\Administrator\Joomla\SiteEnvironment;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Assembler;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\CandidateBuilder;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Context;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\FileWriter;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\PathFilter;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\Publisher;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\SitemapXml;
+use QrzLite\Component\Sitemap\Administrator\Storage\FileWriter;
 use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
+use QrzLite\Component\Sitemap\Administrator\Storage\Published;
+use QrzLite\Component\Sitemap\Administrator\Storage\Publisher;
 
 /**
  * Generates the sitemap of the current site: reads the content, routes it, writes the XML files into the
@@ -76,7 +80,7 @@ final class Generator
                 $this->options->includeArticles ? $candidates->articles : []
             ));
 
-        $published = ['files' => [], 'mode' => '', 'deleted' => [], 'kept' => []];
+        $published = Published::nothing();
         $stored    = false;
 
         if ($write) {
@@ -100,10 +104,10 @@ final class Generator
             $siteUrl,
             $assembly->entries,
             $assembly->exclusions,
-            $published['files'],
-            $published['mode'],
-            $published['deleted'],
-            $published['kept'],
+            $published->files,
+            $published->mode,
+            $published->deleted,
+            $published->kept,
             $stored,
             microtime(true) - $start
         );
