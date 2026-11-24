@@ -14,7 +14,8 @@ use Joomla\CMS\Router\SiteRouter;
 use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\Registry\Registry;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
+use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
 use QrzLite\Component\Sitemap\Site\Controller\DisplayController;
 use QrzLite\Component\Sitemap\Site\Service\Router;
 use QrzLite\Tests\Support\JoomlaTestCase;
@@ -36,7 +37,7 @@ final class HtmlPageTest extends JoomlaTestCase
      */
     private function site(?array $menuParams = null, array $request = [], int $limit = 200): void
     {
-        $this->component(Generator::COMPONENT, ['html_limit' => $limit]);
+        $this->component(SitemapComponent::NAME, ['html_limit' => $limit]);
         $this->plainRoutes('site');
 
         $active = $menuParams === null ? null : new MenuItem([
@@ -56,7 +57,7 @@ final class HtmlPageTest extends JoomlaTestCase
         $this->container->share(MenuFactoryInterface::class, $menus);
 
         $config    = new Registry(['sitename' => 'Test Site', 'sitename_pagetitles' => 0, 'caching' => 0, 'secret' => 'test-secret']);
-        $this->app = $this->siteApplication($config, $request + ['option' => Generator::COMPONENT]);
+        $this->app = $this->siteApplication($config, $request + ['option' => SitemapComponent::NAME]);
         $this->app->loadLanguage(Factory::$language);
         $this->app->loadDocument($this->document);
         $this->app->setDispatcher($this->dispatcher);
@@ -105,7 +106,7 @@ final class HtmlPageTest extends JoomlaTestCase
             $rows[] = ['path' => '/news/item-' . $i, 'title' => $i % 2 ? 'Item <' . $i . '>' : '', 'level' => 2];
         }
 
-        $this->insert(Generator::TABLE, $rows);
+        $this->insert(LinkRepository::TABLE, $rows);
     }
 
     public function testTheLinksOfTheLastGenerationIndentedByLevel(): void

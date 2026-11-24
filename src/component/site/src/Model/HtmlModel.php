@@ -15,7 +15,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\QueryInterface;
 use Joomla\Registry\Registry;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
 
 /**
  * Links saved by the last generation, a page at a time.
@@ -34,12 +34,6 @@ class HtmlModel extends ListModel
 
     protected function getListQuery(): QueryInterface
     {
-        $db    = $this->getDatabase();
-        $query = method_exists($db, 'createQuery') ? $db->createQuery() : $db->getQuery(true);
-
-        return $query
-            ->select($db->quoteName(['path', 'title', 'level', 'lastmod']))
-            ->from($db->quoteName(Generator::TABLE))
-            ->order($db->quoteName('id'));
+        return (new LinkRepository($this->getDatabase()))->listQuery();
     }
 }

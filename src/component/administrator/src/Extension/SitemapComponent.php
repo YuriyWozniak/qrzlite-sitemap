@@ -20,4 +20,7 @@ use Joomla\CMS\Extension\MVCComponent;
 class SitemapComponent extends MVCComponent implements RouterServiceInterface
 {
     use RouterServiceTrait;
+
+    /** The component's name: the option in URLs, the asset of its permissions, the key of its options. */
+    public const NAME = 'com_qrzlitesitemap';
 }

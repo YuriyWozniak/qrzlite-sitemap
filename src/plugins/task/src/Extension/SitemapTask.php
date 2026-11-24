@@ -16,6 +16,7 @@ use Joomla\Component\Scheduler\Administrator\Event\ExecuteTaskEvent;
 use Joomla\Component\Scheduler\Administrator\Task\Status;
 use Joomla\Component\Scheduler\Administrator\Traits\TaskPluginTrait;
 use Joomla\Event\SubscriberInterface;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
 use QrzLite\Component\Sitemap\Administrator\Service\Generator;
 
 /**
@@ -52,7 +53,7 @@ final class SitemapTask extends CMSPlugin implements SubscriberInterface
 
     protected function generate(ExecuteTaskEvent $event): int
     {
-        if (!ComponentHelper::isEnabled(Generator::COMPONENT)) {
+        if (!ComponentHelper::isEnabled(SitemapComponent::NAME)) {
             $this->logTask('The QrzLite Sitemap component is not installed or is disabled', 'warning');
 
             return Status::KNOCKOUT;

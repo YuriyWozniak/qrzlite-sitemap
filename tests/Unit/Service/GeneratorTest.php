@@ -5,7 +5,9 @@ namespace QrzLite\Tests\Unit\Service;
 use Joomla\CMS\Application\AdministratorApplication;
 use Joomla\Registry\Registry;
 use PHPUnit\Framework\Attributes\DataProvider;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
 use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
 use QrzLite\Tests\Support\JoomlaTestCase;
 use QrzLite\Tests\Support\SiteContent;
 
@@ -18,7 +20,7 @@ final class GeneratorTest extends JoomlaTestCase
         parent::setUp();
 
         $this->seedSite();
-        $this->component(Generator::COMPONENT);
+        $this->component(SitemapComponent::NAME);
         $this->app(AdministratorApplication::class, ['live_site' => self::SITE_URL]);
     }
 
@@ -38,7 +40,7 @@ final class GeneratorTest extends JoomlaTestCase
      */
     private function options(array $options): void
     {
-        $this->component(Generator::COMPONENT, $options);
+        $this->component(SitemapComponent::NAME, $options);
     }
 
     public function testGenerateWritesTheSitemapAndSavesTheLinks(): void
@@ -67,7 +69,7 @@ final class GeneratorTest extends JoomlaTestCase
                 ['/news/first', 'First', 2, '2025-01-01 10:00:00'],
                 ['/news/second', 'Second', 2, '2025-02-01 10:00:00'],
             ],
-            array_map(static fn ($row) => [$row['path'], $row['title'], (int) $row['level'], $row['lastmod']], $this->rows(Generator::TABLE))
+            array_map(static fn ($row) => [$row['path'], $row['title'], (int) $row['level'], $row['lastmod']], $this->rows(LinkRepository::TABLE))
         );
 
         $this->assertContains(['article #3 Draft', 'unpublished'], $result->exclusions);
@@ -78,7 +80,7 @@ final class GeneratorTest extends JoomlaTestCase
 
     public function testDryRunWritesAndSavesNothing(): void
     {
-        $this->insert(Generator::TABLE, [['path' => '/old', 'title' => 'Old']]);
+        $this->insert(LinkRepository::TABLE, [['path' => '/old', 'title' => 'Old']]);
 
         $result = Generator::create()->generate(false);
 
@@ -87,7 +89,7 @@ final class GeneratorTest extends JoomlaTestCase
         $this->assertSame('', $result->mode);
         $this->assertFalse($result->stored);
         $this->assertFileDoesNotExist(JPATH_ROOT . '/sitemap.xml');
-        $this->assertSame('/old', $this->rows(Generator::TABLE)[0]['path']);
+        $this->assertSame('/old', $this->rows(LinkRepository::TABLE)[0]['path']);
     }
 
     public function testAnotherFolderGetsTheFilesButTheLinksAreNotSaved(): void
@@ -100,7 +102,7 @@ final class GeneratorTest extends JoomlaTestCase
         $this->assertFileExists($folder . '/sitemap.xml');
         $this->assertFileDoesNotExist(JPATH_ROOT . '/sitemap.xml');
         $this->assertFalse($result->stored);
-        $this->assertSame([], $this->rows(Generator::TABLE));
+        $this->assertSame([], $this->rows(LinkRepository::TABLE));
     }
 
     public function testOptionsAndOverrides(): void
@@ -124,7 +126,7 @@ final class GeneratorTest extends JoomlaTestCase
         Generator::create()->generate();
 
         $this->assertSame(self::sitePaths(), self::paths(JPATH_ROOT . '/sitemap.xml'));
-        $this->assertSame(['Test Site', 'News'], \array_slice(array_column($this->rows(Generator::TABLE), 'title'), 0, 2));
+        $this->assertSame(['Test Site', 'News'], \array_slice(array_column($this->rows(LinkRepository::TABLE), 'title'), 0, 2));
     }
 
     public function testTheUrlFilterLeavesOutMatchingPaths(): void
@@ -187,13 +189,13 @@ final class GeneratorTest extends JoomlaTestCase
 
         $this->assertSame(254, $result->count());
         $this->assertSame(['sitemap_1.xml', 'sitemap_2.xml', 'sitemap.xml'], array_map('basename', $result->files));
-        $this->assertCount(254, $this->rows(Generator::TABLE));
+        $this->assertCount(254, $this->rows(LinkRepository::TABLE));
         $this->assertStringContainsString('<sitemapindex', (string) file_get_contents(JPATH_ROOT . '/sitemap.xml'));
     }
 
     public function testFailedSavingKeepsThePreviousLinks(): void
     {
-        $this->insert(Generator::TABLE, [['path' => '/old', 'title' => 'Old']]);
+        $this->insert(LinkRepository::TABLE, [['path' => '/old', 'title' => 'Old']]);
         $this->db->setQuery(
             'CREATE TRIGGER no_insert BEFORE INSERT ON jos_qrzlitesitemap_links BEGIN SELECT RAISE(ABORT, \'no insert\'); END'
         )->execute();
@@ -205,7 +207,7 @@ final class GeneratorTest extends JoomlaTestCase
             $this->assertStringContainsString('no insert', $e->getMessage());
         }
 
-        $this->assertSame(['/old'], array_column($this->rows(Generator::TABLE), 'path'));
+        $this->assertSame(['/old'], array_column($this->rows(LinkRepository::TABLE), 'path'));
     }
 
     public function testStylesheetFollowsTheSiteLanguage(): void

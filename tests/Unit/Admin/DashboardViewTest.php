@@ -5,7 +5,9 @@ namespace QrzLite\Tests\Unit\Admin;
 use Joomla\CMS\Application\AdministratorApplication;
 use Joomla\CMS\Document\Document;
 use Joomla\CMS\Document\JsonDocument;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
+use QrzLite\Component\Sitemap\Administrator\Model\DashboardModel;
+use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
 use QrzLite\Component\Sitemap\Administrator\View\Dashboard\HtmlView;
 use QrzLite\Tests\Support\JoomlaTestCase;
 
@@ -17,8 +19,8 @@ final class DashboardViewTest extends JoomlaTestCase
      */
     private function render(array $options = [], array $allowed = ['core.manage', 'core.admin'], string $liveSite = self::SITE_URL, ?Document $document = null): string
     {
-        $this->component(Generator::COMPONENT, $options);
-        $this->app(AdministratorApplication::class, ['live_site' => $liveSite], $allowed, self::input(['option' => Generator::COMPONENT]));
+        $this->component(SitemapComponent::NAME, $options);
+        $this->app(AdministratorApplication::class, ['live_site' => $liveSite], $allowed, self::input(['option' => SitemapComponent::NAME]));
         $this->plainRoutes('administrator');
 
         $view = new HtmlView([
@@ -26,6 +28,11 @@ final class DashboardViewTest extends JoomlaTestCase
             'template_path' => self::COMPONENT_PATH . '/administrator/tmpl/dashboard',
         ]);
         $view->setDocument($document ?? $this->document);
+
+        // As the display controller does: the view gets the model of the same name.
+        $model = new DashboardModel(['dbo' => $this->db]);
+        $model->setDatabase($this->db);
+        $view->setModel($model, true);
 
         ob_start();
 
@@ -55,8 +62,9 @@ final class DashboardViewTest extends JoomlaTestCase
     {
         file_put_contents(JPATH_ROOT . '/map.xml', str_repeat('x', 2048));
         file_put_contents(JPATH_ROOT . '/map_1.xml', 'x');
+        file_put_contents(JPATH_ROOT . '/map_old.xml', 'not a part');
         touch(JPATH_ROOT . '/map.xml', 1767225600);
-        $this->insert(Generator::TABLE, [['path' => '/', 'title' => 'Home'], ['path' => '/a', 'title' => 'A']]);
+        $this->insert(LinkRepository::TABLE, [['path' => '/', 'title' => 'Home'], ['path' => '/a', 'title' => 'A']]);
         $this->userState['com_qrzlitesitemap.exclusions'] = [['article #3 <Draft>', 'unpublished']];
 
         $html = $this->render(['filename' => 'map']);
@@ -64,6 +72,7 @@ final class DashboardViewTest extends JoomlaTestCase
 
         $this->assertStringContainsString('<a href="https://example.com/map.xml" target="_blank" rel="noopener">map.xml</a>', $html);
         $this->assertStringContainsString('<a href="https://example.com/map_1.xml"', $html);
+        $this->assertStringNotContainsString('map_old.xml', $html);
         $this->assertStringContainsString('<td>2.00 kB</td>', $html);
         $this->assertStringContainsString('<td>2026-01-01 00:00</td>', $html);
         $this->assertStringContainsString('Links on the HTML sitemap page: 2', $html);

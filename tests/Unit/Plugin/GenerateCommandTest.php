@@ -3,7 +3,8 @@
 namespace QrzLite\Tests\Unit\Plugin;
 
 use Joomla\CMS\Application\ConsoleApplication;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
+use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
 use QrzLite\Plugin\Console\Sitemap\Command\GenerateCommand;
 use QrzLite\Tests\Support\JoomlaTestCase;
 use QrzLite\Tests\Support\SiteContent;
@@ -20,7 +21,7 @@ final class GenerateCommandTest extends JoomlaTestCase
         parent::setUp();
 
         $this->seedSite();
-        $this->component(Generator::COMPONENT);
+        $this->component(SitemapComponent::NAME);
         $this->app(ConsoleApplication::class, ['live_site' => self::SITE_URL]);
     }
 
@@ -54,7 +55,7 @@ final class GenerateCommandTest extends JoomlaTestCase
         $this->assertSame(0, $code);
         $this->assertMatchesRegularExpression('/\[OK\] 4 URLs, \d+ left out, written to sitemap\.xml \(atomic\) in \d+\.\d s/', $output);
         $this->assertFileExists(JPATH_ROOT . '/sitemap.xml');
-        $this->assertCount(4, $this->rows(Generator::TABLE));
+        $this->assertCount(4, $this->rows(LinkRepository::TABLE));
         $this->assertStringNotContainsString('Left out', $output);
     }
 
@@ -64,7 +65,7 @@ final class GenerateCommandTest extends JoomlaTestCase
 
         $this->assertSame(0, $code);
         $this->assertFileDoesNotExist(JPATH_ROOT . '/sitemap.xml');
-        $this->assertSame([], $this->rows(Generator::TABLE));
+        $this->assertSame([], $this->rows(LinkRepository::TABLE));
         $this->assertStringContainsString('* https://example.com/news/first', $output);
         $this->assertStringContainsString('Left out', $output);
         $this->assertStringContainsString('article #3 Draft unpublished', $output);
@@ -79,7 +80,7 @@ final class GenerateCommandTest extends JoomlaTestCase
 
         $this->assertSame(0, $code);
         $this->assertFileExists(JPATH_ROOT . '/out/sitemap.xml');
-        $this->assertSame([], $this->rows(Generator::TABLE));
+        $this->assertSame([], $this->rows(LinkRepository::TABLE));
     }
 
     public function testMissingOutputFolder(): void
@@ -98,7 +99,7 @@ final class GenerateCommandTest extends JoomlaTestCase
 
         $this->assertSame(0, $code);
         $this->assertFileExists(JPATH_ROOT . '/map.xml');
-        $this->assertCount(2, $this->rows(Generator::TABLE));
+        $this->assertCount(2, $this->rows(LinkRepository::TABLE));
     }
 
     public function testUnreadableOptionsFile(): void

@@ -15,6 +15,7 @@ use Joomla\CMS\Application\CMSWebApplicationInterface;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
 use QrzLite\Component\Sitemap\Administrator\Service\Generator;
 
 /**
@@ -26,7 +27,7 @@ class SitemapController extends BaseController
     {
         $this->checkToken();
 
-        if (!$this->app->getIdentity()->authorise('core.manage', Generator::COMPONENT)) {
+        if (!$this->app->getIdentity()->authorise('core.manage', SitemapComponent::NAME)) {
             throw new NotAllowed(Text::_('JERROR_ALERTNOAUTHOR'), 403);
         }
 
@@ -34,7 +35,7 @@ class SitemapController extends BaseController
             $result = Generator::create()->generate();
 
             if ($this->app instanceof CMSWebApplicationInterface) {
-                $this->app->setUserState(Generator::COMPONENT . '.exclusions', $result->exclusions);
+                $this->app->setUserState(SitemapComponent::NAME . '.exclusions', $result->exclusions);
             }
 
             $this->setMessage(Text::sprintf('COM_QRZLITESITEMAP_GENERATED', $result->count(), \count($result->exclusions)));
@@ -42,6 +43,6 @@ class SitemapController extends BaseController
             $this->setMessage(Text::sprintf('COM_QRZLITESITEMAP_GENERATION_FAILED', $e->getMessage()), 'error');
         }
 
-        $this->setRedirect(Route::_('index.php?option=' . Generator::COMPONENT . '&view=dashboard', false));
+        $this->setRedirect(Route::_('index.php?option=' . SitemapComponent::NAME . '&view=dashboard', false));
     }
 }

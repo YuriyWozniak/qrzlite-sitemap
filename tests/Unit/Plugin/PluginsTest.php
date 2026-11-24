@@ -14,7 +14,7 @@ use Joomla\Component\Scheduler\Administrator\Task\Status;
 use Joomla\Component\Scheduler\Administrator\Task\Task;
 use Joomla\DI\Container;
 use Joomla\Event\Event;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
 use QrzLite\Plugin\Console\Sitemap\Command\GenerateCommand;
 use QrzLite\Plugin\Console\Sitemap\Extension\SitemapConsole;
 use QrzLite\Plugin\Task\Sitemap\Extension\SitemapTask;
@@ -58,7 +58,7 @@ final class PluginsTest extends JoomlaTestCase
 
     public function testTheConsolePluginAddsTheCommand(): void
     {
-        $this->component(Generator::COMPONENT);
+        $this->component(SitemapComponent::NAME);
         $app    = $this->app(ConsoleApplication::class);
         $plugin = self::load('console');
 
@@ -71,7 +71,7 @@ final class PluginsTest extends JoomlaTestCase
 
     public function testNoCommandWithoutTheComponent(): void
     {
-        $this->component(Generator::COMPONENT, [], false);
+        $this->component(SitemapComponent::NAME, [], false);
         $app = $this->app(ConsoleApplication::class);
 
         $plugin = self::load('console');
@@ -107,7 +107,7 @@ final class PluginsTest extends JoomlaTestCase
 
     public function testTheTaskGeneratesTheSitemap(): void
     {
-        $this->component(Generator::COMPONENT);
+        $this->component(SitemapComponent::NAME);
         $this->app(AdministratorApplication::class, ['live_site' => self::SITE_URL]);
 
         $result = $this->runTask();
@@ -120,7 +120,7 @@ final class PluginsTest extends JoomlaTestCase
 
     public function testTheTaskFailsWhenTheSitemapCannotBeGenerated(): void
     {
-        $this->component(Generator::COMPONENT, ['site_url' => 'nonsense']);
+        $this->component(SitemapComponent::NAME, ['site_url' => 'nonsense']);
         $this->app(AdministratorApplication::class);
 
         $this->assertSame(Status::KNOCKOUT, $this->runTask()['status']);
@@ -130,7 +130,7 @@ final class PluginsTest extends JoomlaTestCase
 
     public function testTheTaskNeedsTheComponent(): void
     {
-        $this->component(Generator::COMPONENT, [], false);
+        $this->component(SitemapComponent::NAME, [], false);
         $this->app(AdministratorApplication::class, ['live_site' => self::SITE_URL]);
 
         $this->assertSame(Status::KNOCKOUT, $this->runTask()['status']);
@@ -140,7 +140,7 @@ final class PluginsTest extends JoomlaTestCase
 
     public function testOtherRoutinesAreNotHandled(): void
     {
-        $this->component(Generator::COMPONENT);
+        $this->component(SitemapComponent::NAME);
         $this->app(AdministratorApplication::class, ['live_site' => self::SITE_URL]);
 
         $this->assertSame([], $this->runTask('other.routine'));

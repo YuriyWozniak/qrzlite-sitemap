@@ -10,6 +10,8 @@ namespace QrzLite\Component\Sitemap\Administrator\Sitemap;
 
 \defined('_JEXEC') or die;
 
+use QrzLite\Component\Sitemap\Administrator\Storage\SitemapFiles;
+
 /**
  * Writes the sitemap files into a folder: <name>.xml with all URLs, or, above the split limit, <name>_1.xml,
  * <name>_2.xml, ... and a sitemap index in <name>.xml. Split files left over from an earlier, longer sitemap
@@ -42,9 +44,7 @@ final class Publisher
      */
     public function publish(string $folder, string $name, string $baseUrl, array $entries, \DateTimeImmutable $now): array
     {
-        if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]*$/', $name)) {
-            throw new \InvalidArgumentException('Invalid sitemap file name: ' . $name);
-        }
+        $layout = new SitemapFiles($folder, $name);
 
         if (!preg_match('#^https?://[^/?\#\s]+(/[^?\#\s]*)?$#i', $baseUrl)) {
             throw new \InvalidArgumentException('Invalid site URL: ' . $baseUrl);
@@ -55,37 +55,34 @@ final class Publisher
             throw new \RuntimeException('No URLs to write; the sitemap was not changed');
         }
 
-        $folder  = rtrim($folder, '/\\');
         $baseUrl = rtrim($baseUrl, '/');
         $chunks  = array_chunk(array_values($entries), $this->splitLimit);
         $files   = [];
 
         if (\count($chunks) === 1) {
-            $main    = $folder . '/' . $name . '.xml';
-            $mode    = $this->writer->write($main, $this->xml->urlset($baseUrl, $chunks[0]));
-            $files[] = $main;
+            $mode    = $this->writer->write($layout->main(), $this->xml->urlset($baseUrl, $chunks[0]));
+            $files[] = $layout->main();
         } else {
             $locs = [];
 
             foreach ($chunks as $i => $chunk) {
-                $file    = $folder . '/' . $name . '_' . ($i + 1) . '.xml';
+                $file    = $layout->part($i + 1);
                 $this->writer->write($file, $this->xml->urlset($baseUrl, $chunk));
                 $files[] = $file;
-                $locs[]  = $baseUrl . '/' . $name . '_' . ($i + 1) . '.xml';
+                $locs[]  = $baseUrl . '/' . basename($file);
             }
 
             // The index goes last, so it never points to a file that is not written yet.
-            $main    = $folder . '/' . $name . '.xml';
-            $mode    = $this->writer->write($main, $this->xml->index($locs, $now));
-            $files[] = $main;
+            $mode    = $this->writer->write($layout->main(), $this->xml->index($locs, $now));
+            $files[] = $layout->main();
         }
 
         $deleted = [];
         $kept    = [];
         $parts   = \count($chunks) === 1 ? 0 : \count($chunks);
 
-        foreach (glob($folder . '/' . $name . '_*.xml') ?: [] as $file) {
-            if (preg_match('/_(\d+)\.xml$/', $file, $match) && (int) $match[1] > $parts) {
+        foreach ($layout->parts() as $number => $file) {
+            if ($number > $parts) {
                 if ($this->writer->delete($file)) {
                     $deleted[] = $file;
                 } else {

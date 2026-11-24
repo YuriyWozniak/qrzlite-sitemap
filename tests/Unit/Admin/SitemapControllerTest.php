@@ -7,7 +7,8 @@ use Joomla\CMS\Application\AdministratorApplication;
 use Joomla\CMS\Session\Session;
 use QrzLite\Component\Sitemap\Administrator\Controller\DisplayController;
 use QrzLite\Component\Sitemap\Administrator\Controller\SitemapController;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
+use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
 use QrzLite\Tests\Support\JoomlaTestCase;
 use QrzLite\Tests\Support\Redirected;
 use QrzLite\Tests\Support\SiteContent;
@@ -21,7 +22,7 @@ final class SitemapControllerTest extends JoomlaTestCase
         parent::setUp();
 
         $this->seedSite();
-        $this->component(Generator::COMPONENT);
+        $this->component(SitemapComponent::NAME);
     }
 
     /**
@@ -29,7 +30,7 @@ final class SitemapControllerTest extends JoomlaTestCase
      */
     private function controller(array $allowed = ['core.manage'], bool $token = true): SitemapController
     {
-        $app = $this->app(AdministratorApplication::class, ['live_site' => self::SITE_URL], $allowed, self::input(['option' => Generator::COMPONENT]));
+        $app = $this->app(AdministratorApplication::class, ['live_site' => self::SITE_URL], $allowed, self::input(['option' => SitemapComponent::NAME]));
         $this->plainRoutes('administrator');
 
         if ($token) {
@@ -45,7 +46,7 @@ final class SitemapControllerTest extends JoomlaTestCase
         $controller->execute('generate');
 
         $this->assertFileExists(JPATH_ROOT . '/sitemap.xml');
-        $this->assertCount(4, $this->rows(Generator::TABLE));
+        $this->assertCount(4, $this->rows(LinkRepository::TABLE));
         $this->assertSame('index.php?option=com_qrzlitesitemap&view=dashboard', self::property($controller, 'redirect'));
         $this->assertMatchesRegularExpression('/^Sitemap generated: 4 URLs, \d+ items left out\.$/', self::property($controller, 'message'));
         $this->assertSame('message', self::property($controller, 'messageType'));
@@ -54,7 +55,7 @@ final class SitemapControllerTest extends JoomlaTestCase
 
     public function testAFailureIsReportedWithoutWriting(): void
     {
-        $this->component(Generator::COMPONENT, ['site_url' => 'not a url']);
+        $this->component(SitemapComponent::NAME, ['site_url' => 'not a url']);
 
         $controller = $this->controller();
         $controller->execute('generate');

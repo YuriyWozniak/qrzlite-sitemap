@@ -16,6 +16,7 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\Console\Application;
 use Joomla\Event\SubscriberInterface;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
 use QrzLite\Plugin\Console\Sitemap\Command\GenerateCommand;
 
 /**
@@ -35,7 +36,7 @@ final class SitemapConsole extends CMSPlugin implements SubscriberInterface
     {
         $app = $event->getApplication();
 
-        if ($app instanceof Application && ComponentHelper::isEnabled('com_qrzlitesitemap')) {
+        if ($app instanceof Application && ComponentHelper::isEnabled(SitemapComponent::NAME)) {
             $app->addCommand(new GenerateCommand());
         }
     }
