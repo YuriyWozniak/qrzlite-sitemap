@@ -1,0 +1,7 @@
+/
+/about
+/news
+/news/first-news
+/news/sub-news
+/news/sub-news/sub-article
+/news/новина-друга

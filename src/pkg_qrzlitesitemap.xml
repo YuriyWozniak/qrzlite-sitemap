@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="package" method="upgrade">
+    <name>QrzLite Sitemap</name>
+    <packagename>qrzlitesitemap</packagename>
+    <author>Yuriy Wozniak</author>
+    <creationDate>2026-11</creationDate>
+    <copyright>(C) 2026 Yuriy Wozniak</copyright>
+    <license>GNU General Public License version 2 or later; see LICENSE</license>
+    <authorUrl>https://github.com/YuriyWozniak/qrzlite-sitemap</authorUrl>
+    <packagerurl>https://github.com/YuriyWozniak/qrzlite-sitemap</packagerurl>
+    <version>1.0.0</version>
+    <description>Lightweight XML and HTML sitemap of menu items, article categories and articles, generated from the administrator, the Joomla console or the Joomla Scheduler.</description>
+    <targetplatform name="joomla" version="(5|6)\..*"/>
+    <php_minimum>8.1</php_minimum>
+    <blockChildUninstall>true</blockChildUninstall>
+    <scriptfile>script.php</scriptfile>
+    <files folder="packages">
+        <file type="component" id="com_qrzlitesitemap">com_qrzlitesitemap.zip</file>
+        <file type="plugin" id="qrzlitesitemap" group="console">plg_console_qrzlitesitemap.zip</file>
+        <file type="plugin" id="qrzlitesitemap" group="task">plg_task_qrzlitesitemap.zip</file>
+    </files>
+</extension>

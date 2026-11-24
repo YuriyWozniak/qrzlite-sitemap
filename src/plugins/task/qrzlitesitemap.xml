@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="plugin" group="task" method="upgrade">
+    <name>plg_task_qrzlitesitemap</name>
+    <author>Yuriy Wozniak</author>
+    <creationDate>2026-11</creationDate>
+    <copyright>(C) 2026 Yuriy Wozniak</copyright>
+    <license>GNU General Public License version 2 or later; see LICENSE</license>
+    <authorUrl>https://github.com/YuriyWozniak/qrzlite-sitemap</authorUrl>
+    <version>1.0.0</version>
+    <description>PLG_TASK_QRZLITESITEMAP_XML_DESCRIPTION</description>
+    <namespace path="src">QrzLite\Plugin\Task\Sitemap</namespace>
+    <files>
+        <folder plugin="qrzlitesitemap">services</folder>
+        <folder>language</folder>
+        <folder>src</folder>
+    </files>
+</extension>

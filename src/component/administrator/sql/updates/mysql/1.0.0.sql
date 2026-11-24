@@ -1,0 +1,1 @@
+-- Version 1.0.0: the table is created by install.mysql.utf8.sql. This file sets the schema version.

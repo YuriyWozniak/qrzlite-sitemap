@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="component" method="upgrade">
+    <name>com_qrzlitesitemap</name>
+    <author>Yuriy Wozniak</author>
+    <creationDate>2026-11</creationDate>
+    <copyright>(C) 2026 Yuriy Wozniak</copyright>
+    <license>GNU General Public License version 2 or later; see LICENSE</license>
+    <authorUrl>https://github.com/YuriyWozniak/qrzlite-sitemap</authorUrl>
+    <version>1.0.0</version>
+    <description>COM_QRZLITESITEMAP_XML_DESCRIPTION</description>
+    <namespace path="src">QrzLite\Component\Sitemap</namespace>
+
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
+    <update>
+        <schemas>
+            <schemapath type="mysql">sql/updates/mysql</schemapath>
+        </schemas>
+    </update>
+
+    <files folder="site">
+        <folder>language</folder>
+        <folder>src</folder>
+        <folder>tmpl</folder>
+    </files>
+
+    <media destination="com_qrzlitesitemap" folder="media">
+        <folder>xsl</folder>
+    </media>
+
+    <administration>
+        <menu img="class:sitemap">COM_QRZLITESITEMAP</menu>
+        <files folder="administrator">
+            <filename>access.xml</filename>
+            <filename>config.xml</filename>
+            <folder>language</folder>
+            <folder>services</folder>
+            <folder>sql</folder>
+            <folder>src</folder>
+            <folder>tmpl</folder>
+        </files>
+    </administration>
+</extension>
