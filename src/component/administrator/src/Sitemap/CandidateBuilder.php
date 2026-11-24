@@ -13,32 +13,50 @@ namespace QrzLite\Component\Sitemap\Administrator\Sitemap;
 /**
  * Turns database rows of articles, categories and menu items into candidates and decides, for each one,
  * whether a guest can see it and whether search engines may index it.
- *
- * Call articles() first, then categories() and menuItems(): categories take their last change from their
- * articles, and menu items that open an article or a category check that the target is listed.
  */
 final class CandidateBuilder
 {
+    private CategoryTree $tree;
+
     /** @var array<int, Candidate> */
     private array $articles = [];
 
     /** @var array<int, int> Category id of each article. */
     private array $catids = [];
 
-    /** @var array<int, Candidate> */
-    private array $categories = [];
-
-    public function __construct(private readonly Context $context, private readonly CategoryTree $tree)
+    public function __construct(private readonly Context $context)
     {
     }
 
     /**
-     * @param   iterable<array<string, mixed>>  $rows  id, title, alias, catid, state, access, publish_up,
-     *                                                 publish_down, created, modified, metadata, language
+     * Articles come first: categories take their last change from their articles, and menu items that open an
+     * article or a category check that the target is listed.
+     *
+     * @param   array<int, array<string, mixed>>  $articles    id, title, alias, catid, state, access, publish_up,
+     *                                                         publish_down, created, modified, metadata, language
+     * @param   array<int, array<string, mixed>>  $categories  All article categories: id, parent_id, title,
+     *                                                         published, access, language, metadata,
+     *                                                         created_time, modified_time
+     * @param   array<int, array<string, mixed>>  $menuItems   Published site menu items: id, title, link, type,
+     *                                                         home, access, language, params, publish_up,
+     *                                                         publish_down, component, component_enabled
+     */
+    public function build(array $articles, array $categories, array $menuItems): Candidates
+    {
+        $this->tree = new CategoryTree($categories, $this->context);
+
+        $articleCandidates  = $this->articles($articles);
+        $categoryCandidates = $this->categories($categories);
+
+        return new Candidates($this->menuItems($menuItems), $categoryCandidates, $articleCandidates);
+    }
+
+    /**
+     * @param   array<int, array<string, mixed>>  $rows
      *
      * @return  Candidate[]
      */
-    public function articles(iterable $rows): array
+    private function articles(array $rows): array
     {
         $this->articles = [];
         $this->catids   = [];
@@ -76,12 +94,13 @@ final class CandidateBuilder
     }
 
     /**
-     * @param   iterable<array<string, mixed>>  $rows  id, title, metadata, language, created_time, modified_time
-     *                                                 (parents and state are taken from the category tree)
+     * Parents and state of the categories are taken from the category tree.
+     *
+     * @param   array<int, array<string, mixed>>  $rows
      *
      * @return  Candidate[]
      */
-    public function categories(iterable $rows): array
+    private function categories(array $rows): array
     {
         // A category changes when an article listed in it changes.
         $latest = [];
@@ -93,7 +112,7 @@ final class CandidateBuilder
             }
         }
 
-        $this->categories = [];
+        $categories = [];
 
         foreach ($rows as $row) {
             $id      = (int) $row['id'];
@@ -101,7 +120,7 @@ final class CandidateBuilder
             $noindex = $reason === null ? Rules::noindex(Rules::robots($row['metadata'] ?? ''), $this->context->siteRobots) : null;
             $own     = Rules::date($row['modified_time'] ?? null) ?? Rules::date($row['created_time'] ?? null);
 
-            $this->categories[$id] = new Candidate(
+            $categories[$id] = new Candidate(
                 Candidate::TYPE_CATEGORY,
                 $id,
                 (string) $row['title'],
@@ -113,17 +132,15 @@ final class CandidateBuilder
             );
         }
 
-        return array_values($this->categories);
+        return array_values($categories);
     }
 
     /**
-     * @param   iterable<array<string, mixed>>  $rows  Published site menu items: id, title, link, type, home,
-     *                                                 access, language, params, publish_up, publish_down,
-     *                                                 component, component_enabled
+     * @param   array<int, array<string, mixed>>  $rows
      *
      * @return  Candidate[]
      */
-    public function menuItems(iterable $rows): array
+    private function menuItems(array $rows): array
     {
         $items = [];
 

@@ -13,6 +13,7 @@ namespace QrzLite\Plugin\Console\Sitemap\Extension;
 use Joomla\Application\ApplicationEvents;
 use Joomla\Application\Event\ApplicationEvent;
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Extension\ExtensionManagerInterface;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\Console\Application;
 use Joomla\Event\SubscriberInterface;
@@ -36,8 +37,8 @@ final class SitemapConsole extends CMSPlugin implements SubscriberInterface
     {
         $app = $event->getApplication();
 
-        if ($app instanceof Application && ComponentHelper::isEnabled(SitemapComponent::NAME)) {
-            $app->addCommand(new GenerateCommand());
+        if ($app instanceof Application && $app instanceof ExtensionManagerInterface && ComponentHelper::isEnabled(SitemapComponent::NAME)) {
+            $app->addCommand(new GenerateCommand(SitemapComponent::sitemapFactory($app)));
         }
     }
 }

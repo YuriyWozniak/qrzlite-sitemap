@@ -29,9 +29,10 @@ final class DashboardViewTest extends JoomlaTestCase
         ]);
         $view->setDocument($document ?? $this->document);
 
-        // As the display controller does: the view gets the model of the same name.
+        // As the display controller does: the view gets the model of the same name, with the sitemap services.
         $model = new DashboardModel(['dbo' => $this->db]);
         $model->setDatabase($this->db);
+        $model->setSitemapFactory($this->sitemapFactory());
         $view->setModel($model, true);
 
         ob_start();

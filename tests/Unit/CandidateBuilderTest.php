@@ -5,7 +5,6 @@ namespace QrzLite\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Candidate;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\CandidateBuilder;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\CategoryTree;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Context;
 
 final class CandidateBuilderTest extends TestCase
@@ -53,7 +52,19 @@ final class CandidateBuilderTest extends TestCase
     {
         $context = new Context([1, 5], new \DateTimeImmutable('2026-06-15 12:00:00', new \DateTimeZone('UTC')), $siteRobots, $languages, $archived, $default);
 
-        return new CandidateBuilder($context, new CategoryTree(self::CATEGORIES, $context));
+        return new CandidateBuilder($context);
+    }
+
+    /**
+     * Article candidates, built with the test categories and no menu items.
+     *
+     * @param   array<int, array<string, mixed>>  $rows
+     *
+     * @return  Candidate[]
+     */
+    private static function articles(CandidateBuilder $builder, array $rows): array
+    {
+        return $builder->build($rows, self::CATEGORIES, [])->articles;
     }
 
     /**
@@ -120,7 +131,7 @@ final class CandidateBuilderTest extends TestCase
 
     public function testArticleRouteLastmodAndTitle(): void
     {
-        [$article] = $this->builder()->articles([self::article(7)]);
+        [$article] = self::articles($this->builder(), [self::article(7)]);
 
         $this->assertSame(Candidate::TYPE_ARTICLE, $article->type);
         $this->assertSame('index.php?option=com_content&view=article&id=7:article-7&catid=2', $article->route);
@@ -131,14 +142,14 @@ final class CandidateBuilderTest extends TestCase
 
     public function testArticleLastmodFallsBackToCreated(): void
     {
-        [$article] = $this->builder()->articles([self::article(7, ['modified' => '0000-00-00 00:00:00'])]);
+        [$article] = self::articles($this->builder(), [self::article(7, ['modified' => '0000-00-00 00:00:00'])]);
 
         $this->assertSame('2024-01-01 10:00:00', $article->lastmod?->format('Y-m-d H:i:s'));
     }
 
     public function testArticleRules(): void
     {
-        $reasons = self::reasons($this->builder()->articles([
+        $reasons = self::reasons(self::articles($this->builder(), [
             self::article(1),
             self::article(2, ['state' => 0]),
             self::article(3, ['state' => 2]),
@@ -165,26 +176,26 @@ final class CandidateBuilderTest extends TestCase
 
     public function testArchivedArticlesCanBeIncluded(): void
     {
-        [$article] = $this->builder(null, true)->articles([self::article(3, ['state' => 2])]);
+        [$article] = self::articles($this->builder(null, true), [self::article(3, ['state' => 2])]);
 
         $this->assertTrue($article->isIncluded());
     }
 
     public function testNoindexArticleBlocksItsUrl(): void
     {
-        [$own, $site] = $this->builder()->articles([self::article(1, ['metadata' => '{"robots":"noindex, nofollow"}']), self::article(2)]);
+        [$own, $site] = self::articles($this->builder(), [self::article(1, ['metadata' => '{"robots":"noindex, nofollow"}']), self::article(2)]);
 
         $this->assertSame('noindex', $own->excluded);
         $this->assertTrue($own->blocks);
         $this->assertTrue($site->isIncluded());
 
-        [$fromSite] = $this->builder(null, false, 'noindex, follow')->articles([self::article(2)]);
+        [$fromSite] = self::articles($this->builder(null, false, 'noindex, follow'), [self::article(2)]);
         $this->assertTrue($fromSite->blocks);
     }
 
     public function testUnpublishedArticleDoesNotBlock(): void
     {
-        [$article] = $this->builder()->articles([self::article(1, ['state' => 0, 'metadata' => '{"robots":"noindex"}'])]);
+        [$article] = self::articles($this->builder(), [self::article(1, ['state' => 0, 'metadata' => '{"robots":"noindex"}'])]);
 
         $this->assertSame('unpublished', $article->excluded);
         $this->assertFalse($article->blocks);
@@ -192,8 +203,7 @@ final class CandidateBuilderTest extends TestCase
 
     public function testMultilingualRoutesCarryTheLanguage(): void
     {
-        $builder         = $this->builder(['uk-UA', 'en-GB']);
-        [$uk, $all, $ru] = $builder->articles([
+        [$uk, $all, $ru] = self::articles($this->builder(['uk-UA', 'en-GB']), [
             self::article(1, ['language' => 'uk-UA']),
             self::article(2),
             self::article(3, ['language' => 'ru-RU']),
@@ -206,16 +216,15 @@ final class CandidateBuilderTest extends TestCase
 
     public function testCategoryLastmodIsTheLatestOfItselfAndItsListedArticles(): void
     {
-        $builder = $this->builder();
-        $builder->articles([
+        $candidates = $this->builder()->build([
             self::article(1, ['modified' => '2026-03-03 03:03:03']),
             self::article(2, ['modified' => '2026-05-05 05:05:05', 'state' => 0]),
             self::article(3, ['catid' => 4, 'modified' => '2019-01-01 00:00:00']),
-        ]);
+        ], self::CATEGORIES, []);
 
         $categories = [];
 
-        foreach ($builder->categories(self::CATEGORIES) as $category) {
+        foreach ($candidates->categories as $category) {
             $categories[$category->id] = $category;
         }
 
@@ -229,10 +238,9 @@ final class CandidateBuilderTest extends TestCase
 
     public function testMenuItemRules(): void
     {
-        $builder = $this->builder();
-        $builder->articles([self::article(1), self::article(2, ['state' => 0]), self::article(3, ['metadata' => '{"robots":"noindex"}'])]);
+        $articles = [self::article(1), self::article(2, ['state' => 0]), self::article(3, ['metadata' => '{"robots":"noindex"}'])];
 
-        $items   = $builder->menuItems([
+        $items   = $this->builder()->build($articles, self::CATEGORIES, [
             self::menu(101, ['home' => 1, 'access' => 3, 'params' => '{"robots":"noindex"}']),
             self::menu(102),
             self::menu(103, ['type' => 'url', 'link' => 'https://example.org']),
@@ -250,7 +258,7 @@ final class CandidateBuilderTest extends TestCase
             self::menu(115, ['link' => 'index.php?option=com_content&view=categories&id=0']),
             self::menu(116, ['language' => 'en-GB']),
             self::menu(117, ['link' => 'index.php?option=com_content&view=form&layout=edit&id=9']),
-        ]);
+        ])->menuItems;
         $reasons = self::reasons($items);
 
         $this->assertSame([
@@ -280,12 +288,12 @@ final class CandidateBuilderTest extends TestCase
 
     public function testMultilingualMenuItems(): void
     {
-        $items = $this->builder(['uk-UA', 'en-GB'], false, '', 'uk-UA')->menuItems([
+        $items = $this->builder(['uk-UA', 'en-GB'], false, '', 'uk-UA')->build([], self::CATEGORIES, [
             self::menu(101, ['home' => 1, 'language' => 'uk-UA']),
             self::menu(102, ['language' => 'en-GB']),
             self::menu(103, ['language' => 'ru-RU']),
             self::menu(104),
-        ]);
+        ])->menuItems;
 
         $this->assertSame('index.php?Itemid=101&lang=uk-UA', $items[0]->route);
         $this->assertSame('index.php?Itemid=102&lang=en-GB', $items[1]->route);

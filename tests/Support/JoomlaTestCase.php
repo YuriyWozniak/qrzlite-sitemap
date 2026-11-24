@@ -9,13 +9,16 @@ use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Component\ComponentRecord;
 use Joomla\CMS\Document\HtmlDocument;
+use Joomla\CMS\Extension\ComponentInterface;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Form\FormFactoryInterface;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\HTML\Registry as HtmlRegistry;
 use Joomla\CMS\Language\Language;
 use Joomla\CMS\Language\LanguageFactory;
 use Joomla\CMS\Language\LanguageFactoryInterface;
 use Joomla\CMS\Language\Multilanguage;
+use Joomla\CMS\Mail\MailerFactoryInterface;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Router\Router;
@@ -37,6 +40,8 @@ use Joomla\Registry\Registry;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
+use QrzLite\Component\Sitemap\Administrator\Service\SitemapFactory;
 
 /**
  * Runs the component's Joomla-facing classes against the real Joomla libraries, with an SQLite database in
@@ -326,7 +331,8 @@ abstract class JoomlaTestCase extends TestCase
             'enqueueMessage' => function ($message, $type = 'message') {
                 $this->messages[] = [(string) $message, (string) $type];
             },
-            'isClient' => static fn ($name) => str_contains(strtolower($class), strtolower($name)),
+            'isClient'      => static fn ($name) => str_contains(strtolower($class), strtolower($name)),
+            'bootComponent' => fn ($name) => $name === SitemapComponent::NAME ? $this->bootSitemap() : $this->createMock(ComponentInterface::class),
         ];
 
         foreach ($stubs as $method => $callback) {
@@ -338,6 +344,31 @@ abstract class JoomlaTestCase extends TestCase
         self::setStatic(Factory::class, 'application', $app);
 
         return $app;
+    }
+
+    /**
+     * The component as Joomla boots it: from its service provider, with the current application and options.
+     */
+    protected function bootSitemap(): SitemapComponent
+    {
+        $container = new Container($this->container);
+        $container->share(FormFactoryInterface::class, $this->createMock(FormFactoryInterface::class));
+        $container->share(MailerFactoryInterface::class, $this->createMock(MailerFactoryInterface::class));
+
+        (require self::COMPONENT_PATH . '/administrator/services/provider.php')->register($container);
+
+        $component = $container->get(ComponentInterface::class);
+        \assert($component instanceof SitemapComponent);
+
+        return $component;
+    }
+
+    /**
+     * The sitemap services of the component, as controllers and plugins get them.
+     */
+    protected function sitemapFactory(): SitemapFactory
+    {
+        return $this->bootSitemap()->getSitemapFactory();
     }
 
     /**
