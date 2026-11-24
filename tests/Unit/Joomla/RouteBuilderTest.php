@@ -1,6 +1,6 @@
 <?php
 
-namespace QrzLite\Tests\Unit\Service;
+namespace QrzLite\Tests\Unit\Joomla;
 
 use Joomla\CMS\Application\AdministratorApplication;
 use Joomla\CMS\Application\SiteApplication;
@@ -10,7 +10,7 @@ use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Router\SiteRouter;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
-use QrzLite\Component\Sitemap\Administrator\Service\RouteBuilder;
+use QrzLite\Component\Sitemap\Administrator\Joomla\RouteBuilder;
 use QrzLite\Tests\Support\JoomlaTestCase;
 
 final class RouteBuilderTest extends JoomlaTestCase

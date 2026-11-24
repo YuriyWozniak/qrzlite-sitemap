@@ -1,12 +1,12 @@
 <?php
 
-namespace QrzLite\Tests\Unit;
+namespace QrzLite\Tests\Unit\Storage;
 
 use PHPUnit\Framework\TestCase;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Entry;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\FileWriter;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\Publisher;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\SitemapXml;
+use QrzLite\Component\Sitemap\Administrator\Storage\FileWriter;
+use QrzLite\Component\Sitemap\Administrator\Storage\Publisher;
 
 final class PublisherTest extends TestCase
 {
@@ -66,8 +66,8 @@ final class PublisherTest extends TestCase
         $result = $this->publisher()->publish($this->dir, 'sitemap', 'https://example.com/', self::entries(3), new \DateTimeImmutable());
 
         $this->assertSame(['sitemap.xml'], $this->files());
-        $this->assertSame(FileWriter::ATOMIC, $result['mode']);
-        $this->assertSame([$this->dir . '/sitemap.xml'], $result['files']);
+        $this->assertSame(FileWriter::ATOMIC, $result->mode);
+        $this->assertSame([$this->dir . '/sitemap.xml'], $result->files);
         $this->assertSame(3, substr_count(file_get_contents($this->dir . '/sitemap.xml'), '<url>'));
         $this->assertStringContainsString('<loc>https://example.com/page-2.html</loc>', file_get_contents($this->dir . '/sitemap.xml'));
     }
@@ -77,8 +77,8 @@ final class PublisherTest extends TestCase
         $result = $this->publisher(2)->publish($this->dir, 'map', 'https://example.com', self::entries(5), new \DateTimeImmutable());
 
         $this->assertSame(['map.xml', 'map_1.xml', 'map_2.xml', 'map_3.xml'], $this->files());
-        $this->assertCount(4, $result['files']);
-        $this->assertSame($this->dir . '/map.xml', end($result['files']), 'the index is written last');
+        $this->assertCount(4, $result->files);
+        $this->assertSame($this->dir . '/map.xml', $result->files[3], 'the index is written last');
 
         $index = simplexml_load_file($this->dir . '/map.xml');
         $this->assertSame('sitemapindex', $index->getName());
@@ -94,7 +94,7 @@ final class PublisherTest extends TestCase
 
         $result = $this->publisher(2)->publish($this->dir, 'sitemap', 'https://example.com', self::entries(3), new \DateTimeImmutable());
         $this->assertSame(['sitemap.xml', 'sitemap_1.xml', 'sitemap_2.xml', 'sitemap_extra.xml', 'sitemap_old_9.xml'], $this->files());
-        $this->assertSame([$this->dir . '/sitemap_3.xml'], $result['deleted']);
+        $this->assertSame([$this->dir . '/sitemap_3.xml'], $result->deleted);
 
         $this->publisher()->publish($this->dir, 'sitemap', 'https://example.com', self::entries(3), new \DateTimeImmutable());
         $this->assertSame(['sitemap.xml', 'sitemap_extra.xml', 'sitemap_old_9.xml'], $this->files());

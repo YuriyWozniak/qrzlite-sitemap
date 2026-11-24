@@ -6,11 +6,12 @@
  * @license     GNU General Public License version 2 or later; see LICENSE
  */
 
-namespace QrzLite\Component\Sitemap\Administrator\Sitemap;
+namespace QrzLite\Component\Sitemap\Administrator\Storage;
 
 \defined('_JEXEC') or die;
 
-use QrzLite\Component\Sitemap\Administrator\Storage\SitemapFiles;
+use QrzLite\Component\Sitemap\Administrator\Sitemap\Entry;
+use QrzLite\Component\Sitemap\Administrator\Sitemap\SitemapXml;
 
 /**
  * Writes the sitemap files into a folder: <name>.xml with all URLs, or, above the split limit, <name>_1.xml,
@@ -39,10 +40,10 @@ final class Publisher
      * @param   Entry[]             $entries   URLs to list.
      * @param   \DateTimeImmutable  $now       Time of writing (lastmod of the split files).
      *
-     * @return  array{files: string[], mode: string, deleted: string[], kept: string[]}  Written files, write mode
-     *          of the main file, deleted leftovers and leftovers that could not be deleted.
+     * @throws  \InvalidArgumentException  An invalid name or site URL.
+     * @throws  \RuntimeException          No entries, or a file that can't be written.
      */
-    public function publish(string $folder, string $name, string $baseUrl, array $entries, \DateTimeImmutable $now): array
+    public function publish(string $folder, string $name, string $baseUrl, array $entries, \DateTimeImmutable $now): Published
     {
         $layout = new SitemapFiles($folder, $name);
 
@@ -91,6 +92,6 @@ final class Publisher
             }
         }
 
-        return ['files' => $files, 'mode' => $mode, 'deleted' => $deleted, 'kept' => $kept];
+        return new Published($files, $mode, $deleted, $kept);
     }
 }

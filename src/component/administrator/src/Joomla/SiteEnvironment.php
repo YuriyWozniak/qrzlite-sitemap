@@ -6,7 +6,7 @@
  * @license     GNU General Public License version 2 or later; see LICENSE
  */
 
-namespace QrzLite\Component\Sitemap\Administrator\Service;
+namespace QrzLite\Component\Sitemap\Administrator\Joomla;
 
 \defined('_JEXEC') or die;
 

@@ -12,6 +12,7 @@ namespace QrzLite\Component\Sitemap\Administrator\Storage;
 
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\QueryInterface;
+use QrzLite\Component\Sitemap\Administrator\Joomla\Queries;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Entry;
 
 /**
@@ -93,7 +94,6 @@ final class LinkRepository
 
     private function query(): QueryInterface
     {
-        // createQuery() replaces getQuery(true) since Joomla 5.
-        return method_exists($this->db, 'createQuery') ? $this->db->createQuery() : $this->db->getQuery(true);
+        return Queries::create($this->db);
     }
 }

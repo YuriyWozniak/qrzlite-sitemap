@@ -16,7 +16,10 @@ use Joomla\CMS\Router\SiteRouter;
 use Joomla\Database\DatabaseInterface;
 use Joomla\DI\Container;
 use Joomla\Registry\Registry;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\FileWriter;
+use QrzLite\Component\Sitemap\Administrator\Joomla\ContentSource;
+use QrzLite\Component\Sitemap\Administrator\Joomla\RouteBuilder;
+use QrzLite\Component\Sitemap\Administrator\Joomla\SiteEnvironment;
+use QrzLite\Component\Sitemap\Administrator\Storage\FileWriter;
 use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
 
 /**

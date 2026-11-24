@@ -101,9 +101,10 @@ composer coverage    # unit tests with a coverage report in .cache/coverage (nee
 composer build       # dist/pkg_qrzlitesitemap-<version>.zip
 ```
 
-**Unit tests** cover the whole component: the sitemap rules, the XML writer and the file writer
-(`src/component/administrator/src/Sitemap`, no Joomla needed), and everything that runs inside Joomla: reading the
-content, routing, the generator, the dashboard and its *Generate Now* button, the HTML sitemap page (controller,
+**Unit tests** cover the whole component: the sitemap rules and the XML writer
+(`src/component/administrator/src/Sitemap`), the file writer and the publisher of the XML files (in `Storage`), none
+of which need Joomla, and everything that runs inside Joomla: reading the content and routing (the adapters in
+`Joomla`), the generator, the dashboard and its *Generate Now* button, the HTML sitemap page (controller,
 model, view, layout, router), the console command, the scheduled task, the plugins' service providers and the
 package installer script. Those run against the real Joomla libraries, which `composer test` fetches into
 `.cache/joomla` (Joomla 5.4 by default; `JOOMLA_VERSION=6.2.1` for Joomla 6), with an SQLite database in memory.

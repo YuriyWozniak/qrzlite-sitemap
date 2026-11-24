@@ -11,7 +11,7 @@ namespace QrzLite\Component\Sitemap\Administrator\Service;
 \defined('_JEXEC') or die;
 
 use Joomla\Registry\Registry;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\Publisher;
+use QrzLite\Component\Sitemap\Administrator\Storage\Publisher;
 
 /**
  * The sitemap options (config.xml), typed. The defaults apply until the options are saved once.
