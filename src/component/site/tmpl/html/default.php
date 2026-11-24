@@ -23,7 +23,8 @@ $base = rtrim(Uri::root(true), '/');
     <?php else : ?>
         <ul class="list-unstyled">
             <?php foreach ($this->items as $item) : ?>
-                <li style="padding-inline-start: <?php echo max(0, (int) $item->level - 1) * 1.5; ?>em">
+                <?php $indent = max(0, (int) $item->level - 1) * 1.5; ?>
+                <li<?php echo $indent > 0 ? ' style="padding-inline-start: ' . $indent . 'em"' : ''; ?>>
                     <a href="<?php echo $this->escape($base . $item->path); ?>"><?php echo $this->escape($item->title !== '' ? $item->title : $item->path); ?></a>
                 </li>
             <?php endforeach; ?>

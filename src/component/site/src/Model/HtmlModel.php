@@ -10,9 +10,11 @@ namespace QrzLite\Component\Sitemap\Site\Model;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Application\SiteApplication;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\QueryInterface;
+use Joomla\Registry\Registry;
 use QrzLite\Component\Sitemap\Administrator\Service\Generator;
 
 /**
@@ -23,7 +25,7 @@ class HtmlModel extends ListModel
     protected function populateState($ordering = null, $direction = null): void
     {
         $app    = Factory::getApplication();
-        $params = $app->getParams();
+        $params = $app instanceof SiteApplication ? $app->getParams() : new Registry();
 
         $this->setState('params', $params);
         $this->setState('list.limit', max(1, (int) $params->get('html_limit', 200)));

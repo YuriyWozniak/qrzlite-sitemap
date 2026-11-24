@@ -42,7 +42,7 @@ $container->alias('session', 'session.cli')
     ->alias(\Joomla\Session\Session::class, 'session.cli')
     ->alias(\Joomla\Session\SessionInterface::class, 'session.cli');
 
-$app = $container->get(\Joomla\Console\Application::class);
+$app                              = $container->get(\Joomla\Console\Application::class);
 \Joomla\CMS\Factory::$application = $app;
 
 $app->addCommand(new \QrzLite\Plugin\Console\Sitemap\Command\GenerateCommand());

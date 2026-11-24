@@ -12,18 +12,18 @@ final class AssemblerTest extends TestCase
 {
     /** Fake router: route => path */
     private const ROUTES = [
-        'index.php?Itemid=101'   => '/',
-        'index.php?Itemid=102'   => '/news.html',
-        'index.php?Itemid=103'   => '/about.html',
-        'index.php?Itemid=104'   => '/en/',
-        'article-1'              => '/news/first.html',
-        'article-2'              => '/news/second.html',
-        'article-3'              => '/component/content/article/third?Itemid=101',
-        'article-4'              => '/about.html',
-        'article-home'           => '/',
-        'category-2'             => '/news.html',
-        'external'               => 'https://example.org/x',
-        'relative'               => 'no-slash.html',
+        'index.php?Itemid=101' => '/',
+        'index.php?Itemid=102' => '/news.html',
+        'index.php?Itemid=103' => '/about.html',
+        'index.php?Itemid=104' => '/en/',
+        'article-1'            => '/news/first.html',
+        'article-2'            => '/news/second.html',
+        'article-3'            => '/component/content/article/third?Itemid=101',
+        'article-4'            => '/about.html',
+        'article-home'         => '/',
+        'category-2'           => '/news.html',
+        'external'             => 'https://example.org/x',
+        'relative'             => 'no-slash.html',
     ];
 
     private function assembler(string $filter = "/component/\n?view="): Assembler
@@ -46,6 +46,8 @@ final class AssemblerTest extends TestCase
 
     /**
      * @param   Entry[]  $entries
+     *
+     * @return  string[]
      */
     private static function paths(array $entries): array
     {

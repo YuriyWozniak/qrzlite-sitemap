@@ -1,0 +1,7 @@
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "no-inline-style": ["error", { "allowedProperties": ["padding-inline-start"] }],
+    "no-trailing-whitespace": "off"
+  }
+}

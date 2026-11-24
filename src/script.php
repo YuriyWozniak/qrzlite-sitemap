@@ -8,7 +8,6 @@
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\InstallerAdapter;
 use Joomla\CMS\Installer\InstallerScriptInterface;
 use Joomla\Database\DatabaseInterface;
@@ -43,14 +42,9 @@ return new class () implements ServiceProviderInterface {
                     return true;
                 }
 
+                // The package manifest asks Joomla for PHP 8.1 (php_minimum) before this runs.
                 public function preflight(string $type, InstallerAdapter $adapter): bool
                 {
-                    if (version_compare(PHP_VERSION, '8.1', '<')) {
-                        Factory::getApplication()->enqueueMessage('QrzLite Sitemap needs PHP 8.1 or newer.', 'error');
-
-                        return false;
-                    }
-
                     return true;
                 }
 

@@ -1,0 +1,22 @@
+parameters:
+    level: 6
+    # The same code is analysed against Joomla 5 and 6; an ignore can be needed for one of them only.
+    reportUnmatchedIgnoredErrors: false
+    paths:
+        - src
+        - build
+        - tests
+    bootstrapFiles:
+        - tests/joomla.php
+    excludePaths:
+        # Run inside a Joomla site; their Joomla classes are only checked there.
+        - tests/Integration/*
+    ignoreErrors:
+        # Joomla 5 has createQuery() on its drivers only, Joomla 6 also on the interface.
+        -
+            identifier: function.alreadyNarrowedType
+            message: '#method_exists\(\) with Joomla\\Database\\DatabaseInterface and .createQuery.#'
+        # Layouts run inside the view object and use its protected properties.
+        -
+            identifier: property.protected
+            path: src/component/*/tmpl/*

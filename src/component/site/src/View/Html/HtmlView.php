@@ -10,6 +10,7 @@ namespace QrzLite\Component\Sitemap\Site\View\Html;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Application\SiteApplication;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
@@ -38,7 +39,8 @@ class HtmlView extends BaseHtmlView
         $this->pagination = $model->getPagination();
         $this->params     = $model->getState('params');
 
-        $menu    = Factory::getApplication()->getMenu()->getActive();
+        $app     = Factory::getApplication();
+        $menu    = $app instanceof SiteApplication ? $app->getMenu()->getActive() : null;
         $current = $menu && ($menu->query['option'] ?? '') === 'com_qrzlitesitemap';
         $title   = $current ? $menu->title : Text::_('COM_QRZLITESITEMAP_SITEMAP');
 

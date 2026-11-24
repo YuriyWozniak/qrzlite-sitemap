@@ -11,14 +11,44 @@ use QrzLite\Component\Sitemap\Administrator\Sitemap\Context;
 final class CandidateBuilderTest extends TestCase
 {
     private const CATEGORIES = [
-        ['id' => 2, 'parent_id' => 1, 'published' => 1, 'access' => 1, 'language' => '*', 'title' => 'News',
-         'metadata' => '{}', 'created_time' => '2020-01-01 00:00:00', 'modified_time' => '2021-01-01 00:00:00'],
-        ['id' => 3, 'parent_id' => 1, 'published' => 0, 'access' => 1, 'language' => '*', 'title' => 'Drafts',
-         'metadata' => '{}', 'created_time' => '2020-01-01 00:00:00', 'modified_time' => '2020-01-01 00:00:00'],
-        ['id' => 4, 'parent_id' => 2, 'published' => 1, 'access' => 1, 'language' => '*', 'title' => 'Hidden',
-         'metadata' => '{"robots":"noindex, follow"}', 'created_time' => '2020-01-01 00:00:00', 'modified_time' => null],
+        [
+            'id'            => 2,
+            'parent_id'     => 1,
+            'published'     => 1,
+            'access'        => 1,
+            'language'      => '*',
+            'title'         => 'News',
+            'metadata'      => '{}',
+            'created_time'  => '2020-01-01 00:00:00',
+            'modified_time' => '2021-01-01 00:00:00',
+        ],
+        [
+            'id'            => 3,
+            'parent_id'     => 1,
+            'published'     => 0,
+            'access'        => 1,
+            'language'      => '*',
+            'title'         => 'Drafts',
+            'metadata'      => '{}',
+            'created_time'  => '2020-01-01 00:00:00',
+            'modified_time' => '2020-01-01 00:00:00',
+        ],
+        [
+            'id'            => 4,
+            'parent_id'     => 2,
+            'published'     => 1,
+            'access'        => 1,
+            'language'      => '*',
+            'title'         => 'Hidden',
+            'metadata'      => '{"robots":"noindex, follow"}',
+            'created_time'  => '2020-01-01 00:00:00',
+            'modified_time' => null,
+        ],
     ];
 
+    /**
+     * @param   ?string[]  $languages
+     */
     private function builder(?array $languages = null, bool $archived = false, string $siteRobots = '', string $default = ''): CandidateBuilder
     {
         $context = new Context([1, 5], new \DateTimeImmutable('2026-06-15 12:00:00', new \DateTimeZone('UTC')), $siteRobots, $languages, $archived, $default);
@@ -26,21 +56,49 @@ final class CandidateBuilderTest extends TestCase
         return new CandidateBuilder($context, new CategoryTree(self::CATEGORIES, $context));
     }
 
+    /**
+     * @param   array<string, mixed>  $overrides
+     *
+     * @return  array<string, mixed>
+     */
     private static function article(int $id, array $overrides = []): array
     {
         return $overrides + [
-            'id' => $id, 'title' => 'Article ' . $id, 'alias' => 'article-' . $id, 'catid' => 2, 'state' => 1,
-            'access' => 1, 'publish_up' => '2020-01-01 00:00:00', 'publish_down' => null,
-            'created' => '2024-01-01 10:00:00', 'modified' => '2025-05-05 10:00:00', 'metadata' => '{}', 'language' => '*',
+            'id'           => $id,
+            'title'        => 'Article ' . $id,
+            'alias'        => 'article-' . $id,
+            'catid'        => 2,
+            'state'        => 1,
+            'access'       => 1,
+            'publish_up'   => '2020-01-01 00:00:00',
+            'publish_down' => null,
+            'created'      => '2024-01-01 10:00:00',
+            'modified'     => '2025-05-05 10:00:00',
+            'metadata'     => '{}',
+            'language'     => '*',
         ];
     }
 
+    /**
+     * @param   array<string, mixed>  $overrides
+     *
+     * @return  array<string, mixed>
+     */
     private static function menu(int $id, array $overrides = []): array
     {
         return $overrides + [
-            'id' => $id, 'title' => 'Menu ' . $id, 'link' => 'index.php?option=com_content&view=featured', 'type' => 'component',
-            'home' => 0, 'access' => 1, 'language' => '*', 'params' => '{}', 'publish_up' => null, 'publish_down' => null,
-            'component' => 'com_content', 'component_enabled' => 1,
+            'id'                => $id,
+            'title'             => 'Menu ' . $id,
+            'link'              => 'index.php?option=com_content&view=featured',
+            'type'              => 'component',
+            'home'              => 0,
+            'access'            => 1,
+            'language'          => '*',
+            'params'            => '{}',
+            'publish_up'        => null,
+            'publish_down'      => null,
+            'component'         => 'com_content',
+            'component_enabled' => 1,
         ];
     }
 
@@ -134,7 +192,7 @@ final class CandidateBuilderTest extends TestCase
 
     public function testMultilingualRoutesCarryTheLanguage(): void
     {
-        $builder = $this->builder(['uk-UA', 'en-GB']);
+        $builder         = $this->builder(['uk-UA', 'en-GB']);
         [$uk, $all, $ru] = $builder->articles([
             self::article(1, ['language' => 'uk-UA']),
             self::article(2),
@@ -191,6 +249,7 @@ final class CandidateBuilderTest extends TestCase
             self::menu(114, ['link' => 'index.php?option=com_content&view=category&layout=blog&id=3']),
             self::menu(115, ['link' => 'index.php?option=com_content&view=categories&id=0']),
             self::menu(116, ['language' => 'en-GB']),
+            self::menu(117, ['link' => 'index.php?option=com_content&view=form&layout=edit&id=9']),
         ]);
         $reasons = self::reasons($items);
 
@@ -211,6 +270,7 @@ final class CandidateBuilderTest extends TestCase
             114 => 'category unpublished',
             115 => null,
             116 => null,
+            117 => null,
         ], $reasons);
 
         $this->assertTrue($items[0]->home);

@@ -38,6 +38,9 @@ final class SitemapTask extends CMSPlugin implements SubscriberInterface
      */
     protected $autoloadLanguage = true;
 
+    /**
+     * @return  array<string, string>
+     */
     public static function getSubscribedEvents(): array
     {
         return [

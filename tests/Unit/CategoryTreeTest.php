@@ -8,11 +8,18 @@ use QrzLite\Component\Sitemap\Administrator\Sitemap\Context;
 
 final class CategoryTreeTest extends TestCase
 {
+    /**
+     * @param   array<int, array<string, mixed>>  $rows
+     * @param   ?string[]                          $languages
+     */
     private function tree(array $rows, ?array $languages = null, bool $archived = false): CategoryTree
     {
         return new CategoryTree($rows, new Context([1, 5], new \DateTimeImmutable('2026-06-15'), '', $languages, $archived));
     }
 
+    /**
+     * @return  array<string, mixed>
+     */
     private static function row(int $id, int $parent, int $state = 1, int $access = 1, string $language = '*'): array
     {
         return ['id' => $id, 'parent_id' => $parent, 'published' => $state, 'access' => $access, 'language' => $language];

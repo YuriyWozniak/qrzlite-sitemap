@@ -26,7 +26,7 @@ use Joomla\Database\DatabaseInterface;
 $container = Factory::getContainer();
 $container->alias('session', 'session.cli')->alias(\Joomla\Session\SessionInterface::class, 'session.cli');
 Factory::$application = $container->get(\Joomla\Console\Application::class);
-$db = $container->get(DatabaseInterface::class);
+$db                   = $container->get(DatabaseInterface::class);
 
 $store = static function ($table, array $data, ?int $parent = null): int {
     if ($parent !== null) {
@@ -46,22 +46,53 @@ $store = static function ($table, array $data, ?int $parent = null): int {
 };
 
 $category = static fn (int $parent, string $title, string $alias, int $state = 1, int $access = 1, string $robots = '') => $store(new Category($db), [
-    'extension' => 'com_content', 'title' => $title, 'alias' => $alias, 'published' => $state, 'access' => $access,
-    'language' => '*', 'params' => '{}', 'metadata' => json_encode(['robots' => $robots]), 'description' => '', 'created_user_id' => 1,
+    'extension'       => 'com_content',
+    'title'           => $title,
+    'alias'           => $alias,
+    'published'       => $state,
+    'access'          => $access,
+    'language'        => '*',
+    'params'          => '{}',
+    'metadata'        => json_encode(['robots' => $robots]),
+    'description'     => '',
+    'created_user_id' => 1,
 ], $parent);
 
 $article = static fn (int $catid, string $title, string $alias, array $extra = []) => $store(new Content($db), $extra + [
-    'catid' => $catid, 'title' => $title, 'alias' => $alias, 'state' => 1, 'access' => 1, 'language' => '*',
-    'introtext' => '<p>' . $title . '</p>', 'fulltext' => '', 'metadata' => '{"robots":""}', 'attribs' => '{}', 'urls' => '{}',
-    'images' => '{}', 'metakey' => '', 'metadesc' => '', 'created_by' => 1, 'publish_up' => gmdate('Y-m-d H:i:s', time() - 86400),
+    'catid'      => $catid,
+    'title'      => $title,
+    'alias'      => $alias,
+    'state'      => 1,
+    'access'     => 1,
+    'language'   => '*',
+    'introtext'  => '<p>' . $title . '</p>',
+    'fulltext'   => '',
+    'metadata'   => '{"robots":""}',
+    'attribs'    => '{}',
+    'urls'       => '{}',
+    'images'     => '{}',
+    'metakey'    => '',
+    'metadesc'   => '',
+    'created_by' => 1,
+    'publish_up' => gmdate('Y-m-d H:i:s', time() - 86400),
 ]);
 
 $com = (int) $db->setQuery("SELECT extension_id FROM #__extensions WHERE element = 'com_content' AND type = 'component'")->loadResult();
 
 $menu = static fn (string $title, string $alias, string $link, string $type = 'component') => $store(new Menu($db), [
-    'menutype' => 'mainmenu', 'title' => $title, 'alias' => $alias, 'link' => $link, 'type' => $type, 'published' => 1,
-    'component_id' => $type === 'component' ? $com : 0, 'access' => 1, 'language' => '*', 'params' => '{}', 'client_id' => 0,
-    'img' => '', 'browserNav' => 0,
+    'menutype'     => 'mainmenu',
+    'title'        => $title,
+    'alias'        => $alias,
+    'link'         => $link,
+    'type'         => $type,
+    'published'    => 1,
+    'component_id' => $type === 'component' ? $com : 0,
+    'access'       => 1,
+    'language'     => '*',
+    'params'       => '{}',
+    'client_id'    => 0,
+    'img'          => '',
+    'browserNav'   => 0,
 ], 1);
 
 $news    = $category(1, 'News', 'news');

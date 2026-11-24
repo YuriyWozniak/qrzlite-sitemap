@@ -3,6 +3,7 @@
 namespace QrzLite\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use QrzLite\Tests\Support\HtmlSamples;
 
 /**
  * Checks of the package files that Joomla would only report at install time.
@@ -11,6 +12,9 @@ final class PackageTest extends TestCase
 {
     private const SRC = __DIR__ . '/../../src';
 
+    /**
+     * @return  string[]
+     */
     private static function files(string $pattern): array
     {
         $found    = [];
@@ -71,25 +75,36 @@ final class PackageTest extends TestCase
         }
     }
 
-    public function testStylesheetsTransformASitemap(): void
+    public function testStylesheetsTransformASitemapAndAnIndex(): void
     {
-        $sitemap = new \DOMDocument();
-        $sitemap->loadXML('<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-            . '<url><loc>https://example.com/a.html</loc><lastmod>2026-01-02T03:04:05+00:00</lastmod></url></urlset>');
-
         if (!class_exists(\XSLTProcessor::class)) {
             $this->markTestSkipped('The xsl extension is not installed');
         }
+
+        $documents = [
+            'urlset' => '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                . '<url><loc>https://example.com/a.html</loc><lastmod>2026-01-02T03:04:05+00:00</lastmod></url></urlset>',
+            'index' => '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                . '<sitemap><loc>https://example.com/a.html</loc><lastmod>2026-01-02T03:04:05+00:00</lastmod></sitemap></sitemapindex>',
+        ];
 
         foreach (self::files('/\.xsl$/') as $file) {
             $xsl = new \DOMDocument();
             $xsl->load($file);
             $processor = new \XSLTProcessor();
             $processor->importStylesheet($xsl);
-            $html = $processor->transformToXml($sitemap);
 
-            $this->assertStringContainsString('href="https://example.com/a.html"', (string) $html, $file);
-            $this->assertStringContainsString('2026-01-02 03:04', (string) $html, $file);
+            foreach ($documents as $kind => $xml) {
+                $sitemap = new \DOMDocument();
+                $sitemap->loadXML('<?xml version="1.0"?>' . $xml);
+                $html = (string) $processor->transformToXml($sitemap);
+
+                $this->assertStringContainsString('href="https://example.com/a.html"', $html, $file);
+                $this->assertStringContainsString('2026-01-02 03:04', $html, $file);
+                $this->assertStringContainsString('<meta name="robots" content="noindex">', $html, $file);
+
+                HtmlSamples::save(basename($file, '.xsl') . '-' . $kind, $html);
+            }
         }
     }
 

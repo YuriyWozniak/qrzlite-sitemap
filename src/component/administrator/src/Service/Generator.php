@@ -57,8 +57,9 @@ final class Generator
     {
         $params = clone ComponentHelper::getParams(self::COMPONENT);
 
-        if ($overrides !== null) {
-            $params->merge($overrides);
+        // Not Registry::merge(), which skips empty values: an override "" turns an option off.
+        foreach ($overrides?->toArray() ?? [] as $name => $value) {
+            $params->set($name, $value);
         }
 
         return new self(Factory::getContainer()->get(DatabaseInterface::class), $params, Factory::getApplication(), JPATH_ROOT);
@@ -104,7 +105,7 @@ final class Generator
 
         $assembly = (new Assembler(
             new RouteBuilder($siteUrl),
-            PathFilter::fromText((string) $this->params->get('exclude', self::DEFAULT_EXCLUDE)),
+            PathFilter::fromText($this->option('exclude', self::DEFAULT_EXCLUDE)),
             (string) $this->app->get('sitename', '')
         ))->assemble($candidates);
 
@@ -113,8 +114,8 @@ final class Generator
 
         if ($write) {
             $xml = new SitemapXml(
-                (string) $this->params->get('changefreq', 'weekly'),
-                (string) $this->params->get('priority', '0.5'),
+                $this->option('changefreq', 'weekly'),
+                $this->option('priority', '0.5'),
                 $this->params->get('xsl', 1) ? $this->stylesheet($siteUrl, $default) : null,
                 $now
             );
@@ -139,6 +140,15 @@ final class Generator
             $stored,
             microtime(true) - $start
         );
+    }
+
+    /**
+     * A text option; empty when it was saved empty ("None", an empty filter), the default only when it was
+     * never saved. Registry::get() would give the default for an empty value too.
+     */
+    private function option(string $name, string $default): string
+    {
+        return $this->params->exists($name) ? trim((string) $this->params->get($name, '')) : $default;
     }
 
     public function filename(): string

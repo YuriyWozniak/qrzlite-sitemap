@@ -24,6 +24,9 @@ final class SitemapXmlTest extends TestCase
         self::assertTrue($valid, implode("\n", $errors));
     }
 
+    /**
+     * @return  Entry[]
+     */
     private static function entries(): array
     {
         return [

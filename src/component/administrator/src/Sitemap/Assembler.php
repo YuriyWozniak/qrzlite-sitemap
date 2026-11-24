@@ -89,7 +89,7 @@ final class Assembler
             }
 
             $current[2]   = Rules::latest($current[2], $candidate->lastmod);
-            $urls[$path] = $current;
+            $urls[$path]  = $current;
         }
 
         foreach (array_keys($blocked) as $path) {

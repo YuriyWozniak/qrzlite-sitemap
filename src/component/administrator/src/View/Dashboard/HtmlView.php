@@ -10,6 +10,8 @@ namespace QrzLite\Component\Sitemap\Administrator\View\Dashboard;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Application\CMSWebApplicationInterface;
+use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
@@ -62,7 +64,11 @@ class HtmlView extends BaseHtmlView
         $db          = Factory::getContainer()->get(DatabaseInterface::class);
         $this->links = (int) $db->setQuery('SELECT COUNT(*) FROM ' . $db->quoteName(Generator::TABLE))->loadResult();
 
-        $this->exclusions = (array) Factory::getApplication()->getUserState(Generator::COMPONENT . '.exclusions', []);
+        $app = Factory::getApplication();
+
+        if ($app instanceof CMSWebApplicationInterface) {
+            $this->exclusions = (array) $app->getUserState(Generator::COMPONENT . '.exclusions', []);
+        }
 
         $this->addToolbar();
 
@@ -73,7 +79,13 @@ class HtmlView extends BaseHtmlView
     {
         ToolbarHelper::title(Text::_('COM_QRZLITESITEMAP'), 'sitemap');
 
-        $toolbar = $this->getDocument()->getToolbar();
+        $document = $this->getDocument();
+
+        if (!$document instanceof HtmlDocument) {
+            return;
+        }
+
+        $toolbar = $document->getToolbar();
         $toolbar->standardButton('refresh', 'COM_QRZLITESITEMAP_GENERATE', 'sitemap.generate')->listCheck(false);
 
         if ($this->getCurrentUser()->authorise('core.admin', Generator::COMPONENT)) {

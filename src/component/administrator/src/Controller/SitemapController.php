@@ -11,6 +11,7 @@ namespace QrzLite\Component\Sitemap\Administrator\Controller;
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Access\Exception\NotAllowed;
+use Joomla\CMS\Application\CMSWebApplicationInterface;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
@@ -32,7 +33,10 @@ class SitemapController extends BaseController
         try {
             $result = Generator::create()->generate();
 
-            $this->app->setUserState(Generator::COMPONENT . '.exclusions', $result->exclusions);
+            if ($this->app instanceof CMSWebApplicationInterface) {
+                $this->app->setUserState(Generator::COMPONENT . '.exclusions', $result->exclusions);
+            }
+
             $this->setMessage(Text::sprintf('COM_QRZLITESITEMAP_GENERATED', $result->count(), \count($result->exclusions)));
         } catch (\Throwable $e) {
             $this->setMessage(Text::sprintf('COM_QRZLITESITEMAP_GENERATION_FAILED', $e->getMessage()), 'error');

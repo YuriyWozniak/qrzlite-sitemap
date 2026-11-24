@@ -46,7 +46,7 @@ final class RouteBuilder
         $this->attachLanguageFilter();
     }
 
-    public function __invoke(string $route): ?string
+    public function __invoke(string $route): string
     {
         $path   = $this->router->build($route)->toString(['path', 'query', 'fragment']);
         $prefix = Uri::root(true) . '/';

@@ -23,6 +23,12 @@ class DisplayController extends BaseController
      */
     protected $default_view = 'html';
 
+    /**
+     * @param   bool                   $cachable   The page is cached for guests.
+     * @param   array<string, string>  $urlparams  Ignored: the page has its own safe URL parameters.
+     *
+     * @return  static
+     */
     public function display($cachable = true, $urlparams = [])
     {
         $this->input->set('view', 'html');

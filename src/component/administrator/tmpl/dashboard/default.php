@@ -14,6 +14,7 @@ use Joomla\CMS\Router\Route;
 
 /** @var \QrzLite\Component\Sitemap\Administrator\View\Dashboard\HtmlView $this */
 ?>
+<!-- [html-validate-disable-next wcag/h32: the toolbar buttons submit the form] -->
 <form action="<?php echo Route::_('index.php?option=com_qrzlitesitemap&view=dashboard'); ?>" method="post" name="adminForm" id="adminForm">
     <?php if ($this->siteUrlError !== '') : ?>
         <div class="alert alert-warning"><?php echo $this->escape($this->siteUrlError); ?></div>

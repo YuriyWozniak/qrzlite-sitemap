@@ -14,6 +14,7 @@ use Joomla\Application\ApplicationEvents;
 use Joomla\Application\Event\ApplicationEvent;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Plugin\CMSPlugin;
+use Joomla\Console\Application;
 use Joomla\Event\SubscriberInterface;
 use QrzLite\Plugin\Console\Sitemap\Command\GenerateCommand;
 
@@ -22,6 +23,9 @@ use QrzLite\Plugin\Console\Sitemap\Command\GenerateCommand;
  */
 final class SitemapConsole extends CMSPlugin implements SubscriberInterface
 {
+    /**
+     * @return  array<string, string>
+     */
     public static function getSubscribedEvents(): array
     {
         return [ApplicationEvents::BEFORE_EXECUTE => 'registerCommands'];
@@ -29,8 +33,10 @@ final class SitemapConsole extends CMSPlugin implements SubscriberInterface
 
     public function registerCommands(ApplicationEvent $event): void
     {
-        if (ComponentHelper::isEnabled('com_qrzlitesitemap')) {
-            $event->getApplication()->addCommand(new GenerateCommand());
+        $app = $event->getApplication();
+
+        if ($app instanceof Application && ComponentHelper::isEnabled('com_qrzlitesitemap')) {
+            $app->addCommand(new GenerateCommand());
         }
     }
 }

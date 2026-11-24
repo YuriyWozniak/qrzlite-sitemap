@@ -159,6 +159,9 @@ final class CandidateBuilder
         return $items;
     }
 
+    /**
+     * @param   array<string, mixed>  $row
+     */
     private function menuType(array $row): ?string
     {
         $type = (string) ($row['type'] ?? '');
@@ -182,7 +185,7 @@ final class CandidateBuilder
     {
         parse_str((string) parse_url($link, PHP_URL_QUERY), $query);
 
-        if (($query['option'] ?? '') !== 'com_content' || !isset($query['id']) || !is_scalar($query['id'])) {
+        if (($query['option'] ?? '') !== 'com_content' || !isset($query['id']) || !\is_scalar($query['id'])) {
             return null;
         }
 

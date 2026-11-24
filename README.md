@@ -90,12 +90,26 @@ Joomla 5 or 6, PHP 8.1 or newer (Joomla 6 itself needs 8.3), MySQL or MariaDB.
 
 ```sh
 composer install
-composer test        # PHPUnit: the sitemap rules, XML output (validated against the official schema), file writing
+npm install          # only for the HTML and CSS linters
+composer test        # unit tests
+composer lint        # PHP: syntax (all PHP versions in CI), code style, static analysis
+composer lint:html   # HTML and CSS of the rendered layouts and of the XSL browser view
+composer fix         # fix the code style
+composer coverage    # unit tests with a coverage report in .cache/coverage (needs pcov or Xdebug)
 composer build       # dist/pkg_qrzlitesitemap-<version>.zip
 ```
 
-The rules, the XML writer and the file writer (`src/component/administrator/src/Sitemap`) don't depend on Joomla
-and are unit tested.
+**Unit tests** cover the whole component: the sitemap rules, the XML writer and the file writer
+(`src/component/administrator/src/Sitemap`, no Joomla needed), and everything that runs inside Joomla: reading the
+content, routing, the generator, the dashboard and its *Generate Now* button, the HTML sitemap page (controller,
+model, view, layout, router), the console command, the scheduled task, the plugins' service providers and the
+package installer script. Those run against the real Joomla libraries, which `composer test` fetches into
+`.cache/joomla` (Joomla 5.4 by default; `JOOMLA_VERSION=6.2.1` for Joomla 6), with an SQLite database in memory.
+CI runs them on PHP 8.1–8.5 with Joomla 5.4 and on PHP 8.3–8.5 with Joomla 6.2, and requires 98% statement coverage.
+
+**Linters**: PHP CS Fixer (PSR-12 with Joomla's additions), PHPStan level 6 against Joomla 5.4 and 6.2,
+html-validate for the HTML that the layouts and the XSL stylesheets produce, and Stylelint for the stylesheets' CSS.
+The component has no JavaScript.
 
 The integration test installs the package into a fresh Joomla 5.4 and 6.2 site (GitHub Actions, MariaDB) with test
 content that exercises every rule, then checks the sitemap from the console command and from a scheduled task, and

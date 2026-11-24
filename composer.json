@@ -9,17 +9,58 @@
         "ext-mbstring": "*"
     },
     "require-dev": {
+        "php-cs-fixer/shim": "^3.64",
+        "php-parallel-lint/php-parallel-lint": "^1.4",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^10.5"
     },
     "autoload-dev": {
         "psr-4": {
             "QrzLite\\Component\\Sitemap\\Administrator\\": "src/component/administrator/src/",
+            "QrzLite\\Component\\Sitemap\\Site\\": "src/component/site/src/",
+            "QrzLite\\Plugin\\Console\\Sitemap\\": "src/plugins/console/src/",
+            "QrzLite\\Plugin\\Task\\Sitemap\\": "src/plugins/task/src/",
             "QrzLite\\Tests\\": "tests/"
         }
     },
     "scripts": {
-        "test": "phpunit",
-        "build": "php build/build.php"
+        "joomla": "@php build/joomla.php",
+        "lint": [
+            "@lint:syntax",
+            "@lint:style",
+            "@lint:static"
+        ],
+        "lint:syntax": "parallel-lint src build tests",
+        "lint:style": "php-cs-fixer check --diff",
+        "lint:static": [
+            "@joomla",
+            "phpstan analyse --no-progress --memory-limit=1G"
+        ],
+        "lint:html": [
+            "@joomla",
+            "@putenv QRZLITE_HTML_OUT=.cache/html",
+            "phpunit --no-progress",
+            "npm run lint"
+        ],
+        "fix": "php-cs-fixer fix",
+        "test": [
+            "@joomla",
+            "phpunit"
+        ],
+        "coverage": [
+            "@joomla",
+            "@php -d pcov.enabled=1 vendor/bin/phpunit --coverage-text --coverage-html .cache/coverage"
+        ],
+        "build": "@php build/build.php"
+    },
+    "scripts-descriptions": {
+        "joomla": "Fetch the Joomla files the tests and the static analysis load (.cache/joomla)",
+        "lint": "PHP syntax, code style and static analysis",
+        "lint:html": "Render the layouts and stylesheets, then check their HTML and CSS (needs npm install)",
+        "fix": "Fix the code style",
+        "test": "Unit tests",
+        "coverage": "Unit tests with a coverage report (needs pcov or Xdebug)",
+        "build": "Build dist/pkg_qrzlitesitemap-<version>.zip"
     },
     "config": {
         "sort-packages": true

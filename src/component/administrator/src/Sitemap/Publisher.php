@@ -61,8 +61,8 @@ final class Publisher
         $files   = [];
 
         if (\count($chunks) === 1) {
-            $main = $folder . '/' . $name . '.xml';
-            $mode = $this->writer->write($main, $this->xml->urlset($baseUrl, $chunks[0]));
+            $main    = $folder . '/' . $name . '.xml';
+            $mode    = $this->writer->write($main, $this->xml->urlset($baseUrl, $chunks[0]));
             $files[] = $main;
         } else {
             $locs = [];

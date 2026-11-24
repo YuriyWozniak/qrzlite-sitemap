@@ -9,6 +9,9 @@ use QrzLite\Component\Sitemap\Administrator\Sitemap\Rules;
 
 final class RulesTest extends TestCase
 {
+    /**
+     * @param   ?string[]  $languages
+     */
     private function context(?array $languages = null, bool $archived = false): Context
     {
         return new Context([1, 5], new \DateTimeImmutable('2026-06-15 12:00:00', new \DateTimeZone('UTC')), '', $languages, $archived);
@@ -35,6 +38,9 @@ final class RulesTest extends TestCase
         $this->assertSame('', Rules::robots('{"robots":["noindex"]}'));
     }
 
+    /**
+     * @return  array<string, array{string, string, bool}>
+     */
     public static function noindexCases(): array
     {
         return [

@@ -31,6 +31,9 @@ final class PublisherTest extends TestCase
         rmdir($this->dir);
     }
 
+    /**
+     * @return  Entry[]
+     */
     private static function entries(int $count): array
     {
         $entries = [new Entry('/', 'Home')];
@@ -47,6 +50,9 @@ final class PublisherTest extends TestCase
         return new Publisher(new FileWriter(), new SitemapXml('weekly', '0.5'), $limit);
     }
 
+    /**
+     * @return  string[]
+     */
     private function files(): array
     {
         $files = array_map('basename', glob($this->dir . '/*') ?: []);
@@ -153,7 +159,7 @@ final class PublisherTest extends TestCase
 
     public function testReadOnlyFolderFallsBackToInPlace(): void
     {
-        if (DIRECTORY_SEPARATOR !== '/' || (function_exists('posix_geteuid') && posix_geteuid() === 0)) {
+        if (DIRECTORY_SEPARATOR !== '/' || (\function_exists('posix_geteuid') && posix_geteuid() === 0)) {
             $this->markTestSkipped('Needs POSIX permissions and a non-root user');
         }
 
@@ -168,7 +174,7 @@ final class PublisherTest extends TestCase
 
     public function testNothingWritable(): void
     {
-        if (DIRECTORY_SEPARATOR !== '/' || (function_exists('posix_geteuid') && posix_geteuid() === 0)) {
+        if (DIRECTORY_SEPARATOR !== '/' || (\function_exists('posix_geteuid') && posix_geteuid() === 0)) {
             $this->markTestSkipped('Needs POSIX permissions and a non-root user');
         }
 
