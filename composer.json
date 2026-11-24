@@ -63,6 +63,9 @@
         "build": "Build dist/pkg_qrzlitesitemap-<version>.zip"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "platform": {
+            "php": "8.1.31"
+        }
     }
 }

@@ -3,4 +3,3 @@
 /dist/
 /.cache/
 /.phpunit.cache/
-/composer.lock
