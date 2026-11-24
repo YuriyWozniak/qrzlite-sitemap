@@ -9,7 +9,7 @@
     "lint:css": "stylelint \"src/**/*.xsl\" \".cache/html/*.html\""
   },
   "devDependencies": {
-    "html-validate": "^9.0.0",
+    "html-validate": "^11.22.1",
     "postcss-html": "^1.7.0",
     "stylelint": "^16.10.0",
     "stylelint-config-standard": "^36.0.1"
