@@ -88,6 +88,8 @@ Joomla 5 or 6, PHP 8.1 or newer (Joomla 6 itself needs 8.3), MySQL or MariaDB.
 
 ## Development
 
+Every feature or fix goes in through a pull request from its own branch; see [CONTRIBUTING](CONTRIBUTING.md).
+
 ```sh
 composer install
 npm install          # only for the HTML and CSS linters
