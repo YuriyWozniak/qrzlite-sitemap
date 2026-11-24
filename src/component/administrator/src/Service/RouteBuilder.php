@@ -10,9 +10,9 @@ namespace QrzLite\Component\Sitemap\Administrator\Service;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Application\SiteApplication;
 use Joomla\CMS\Event\Application\AfterInitialiseEvent;
-use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Router\SiteRouter;
 use Joomla\CMS\Uri\Uri;
@@ -23,16 +23,29 @@ use Joomla\CMS\Uri\Uri;
  * The result is a path relative to the site root ("/news/item.html"); the site URL is added by the generator.
  * Joomla's site router puts the base path of the current request in front of every path; outside a site
  * request that base is wrong (the console gives "cli"), so it is taken off here.
+ *
+ * Call prepare() once before building paths: it sets up what the site router expects of a site request.
  */
 final class RouteBuilder
 {
-    private readonly SiteRouter $router;
+    /**
+     * @param   CMSApplicationInterface     $app              The running application, which boots the language filter.
+     * @param   \Closure(): SiteApplication  $siteApplication  Gives the site application, made only when needed.
+     */
+    public function __construct(
+        private readonly SiteRouter $router,
+        private readonly CMSApplicationInterface $app,
+        private readonly \Closure $siteApplication
+    ) {
+    }
 
     /**
-     * @param   string       $siteUrl  Site URL, e.g. https://example.com
-     * @param   ?SiteRouter  $router   The site router, null for Joomla's.
+     * Makes the site router work outside a site request. Changes global state: the request URI of the console
+     * and the language filter plugin.
+     *
+     * @param   string  $siteUrl  Site URL, e.g. https://example.com
      */
-    public function __construct(string $siteUrl, ?SiteRouter $router = null)
+    public function prepare(string $siteUrl): void
     {
         // The console (cli/joomla.php, scheduler:run) has no request URI, so Joomla makes the current URL from the
         // script name: "https://example.comcli/joomla.php", which can't be parsed. Give it the site path instead.
@@ -40,8 +53,6 @@ final class RouteBuilder
             $_SERVER['REQUEST_URI'] = rtrim((string) parse_url($siteUrl, PHP_URL_PATH), '/') . '/';
             Uri::reset();
         }
-
-        $this->router = $router ?? Factory::getContainer()->get(SiteRouter::class);
 
         $this->attachLanguageFilter();
     }
@@ -74,11 +85,11 @@ final class RouteBuilder
             }
         }
 
-        $plugin = Factory::getApplication()->bootPlugin('languagefilter', 'system');
+        $plugin = $this->app->bootPlugin('languagefilter', 'system');
 
         if (method_exists($plugin, 'onAfterInitialise')) {
             $plugin->onAfterInitialise(new AfterInitialiseEvent('onAfterInitialise', [
-                'subject' => Factory::getContainer()->get(SiteApplication::class),
+                'subject' => ($this->siteApplication)(),
             ]));
         }
     }

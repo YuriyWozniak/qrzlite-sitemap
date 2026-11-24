@@ -33,7 +33,7 @@ final class GenerateCommandTest extends JoomlaTestCase
     private function command(array $options = [], int $verbosity = OutputInterface::VERBOSITY_NORMAL): array
     {
         $output = new BufferedOutput($verbosity);
-        $code   = (new GenerateCommand())->execute(new ArrayInput($options), $output);
+        $code   = (new GenerateCommand($this->sitemapFactory()))->execute(new ArrayInput($options), $output);
 
         // One line per message, however wide the terminal is.
         return [$code, preg_replace('/\s+/', ' ', $output->fetch())];
@@ -41,7 +41,7 @@ final class GenerateCommandTest extends JoomlaTestCase
 
     public function testDescription(): void
     {
-        $command = new GenerateCommand();
+        $command = new GenerateCommand($this->sitemapFactory());
 
         $this->assertSame('qrzlite-sitemap:generate', $command->getName());
         $this->assertSame(['dry-run', 'output', 'options'], array_keys($command->getDefinition()->getOptions()));

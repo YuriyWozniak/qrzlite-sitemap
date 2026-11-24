@@ -5,6 +5,7 @@ namespace QrzLite\Tests\Unit\Admin;
 use Joomla\CMS\Application\AdministratorApplication;
 use Joomla\CMS\Component\Router\RouterFactoryInterface;
 use Joomla\CMS\Extension\ComponentInterface;
+use Joomla\CMS\Extension\ExtensionManagerInterface;
 use Joomla\CMS\Form\FormFactoryInterface;
 use Joomla\CMS\Installer\InstallerAdapter;
 use Joomla\CMS\Installer\InstallerScriptInterface;
@@ -12,8 +13,10 @@ use Joomla\CMS\Mail\MailerFactoryInterface;
 use Joomla\CMS\Menu\AbstractMenu;
 use Joomla\DI\Container;
 use Joomla\Registry\Registry;
+use QrzLite\Component\Sitemap\Administrator\Controller\DisplayController;
 use QrzLite\Component\Sitemap\Administrator\Controller\SitemapController;
 use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
+use QrzLite\Component\Sitemap\Administrator\Model\DashboardModel;
 use QrzLite\Component\Sitemap\Site\Service\Router;
 use QrzLite\Tests\Support\JoomlaTestCase;
 
@@ -40,6 +43,36 @@ final class InstallationTest extends JoomlaTestCase
         $site = $this->siteApplication(new Registry());
         $this->assertInstanceOf(Router::class, $component->createRouter($site, $this->createMock(AbstractMenu::class)));
         $this->assertInstanceOf(RouterFactoryInterface::class, $container->get(RouterFactoryInterface::class));
+    }
+
+    public function testTheDashboardModelGetsTheSitemapServices(): void
+    {
+        $this->component(SitemapComponent::NAME, ['filename' => 'map']);
+        $app = $this->app(AdministratorApplication::class, ['live_site' => self::SITE_URL]);
+        file_put_contents(JPATH_ROOT . '/map.xml', 'x');
+
+        $controller = $this->bootSitemap()->getMVCFactory()->createController('Display', 'Administrator', ['base_path' => self::INSTALLED_PATH], $app, $app->getInput());
+        $this->assertInstanceOf(DisplayController::class, $controller);
+
+        $model = $controller->getModel('Dashboard');
+        $this->assertInstanceOf(DashboardModel::class, $model);
+        $this->assertSame(self::SITE_URL, $model->getSiteUrl());
+        $this->assertSame(['map.xml'], array_column($model->getFiles(), 'name'));
+    }
+
+    public function testTheSitemapServicesNeedTheComponent(): void
+    {
+        $apps = $this->createMock(ExtensionManagerInterface::class);
+        $apps->method('bootComponent')->willReturn($this->createMock(ComponentInterface::class));
+
+        foreach ([null, $apps] as $app) {
+            try {
+                SitemapComponent::sitemapFactory($app);
+                $this->fail('No exception');
+            } catch (\RuntimeException $e) {
+                $this->assertSame('The QrzLite Sitemap component is not installed', $e->getMessage());
+            }
+        }
     }
 
     public function testFirstInstallTurnsThePluginsOn(): void

@@ -17,7 +17,6 @@ use Joomla\Component\Scheduler\Administrator\Task\Status;
 use Joomla\Component\Scheduler\Administrator\Traits\TaskPluginTrait;
 use Joomla\Event\SubscriberInterface;
 use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
 
 /**
  * "Generate the sitemap" task for the Joomla Scheduler (System - Scheduled Tasks). It runs from the lazy
@@ -60,7 +59,7 @@ final class SitemapTask extends CMSPlugin implements SubscriberInterface
         }
 
         try {
-            $result = Generator::create()->generate();
+            $result = SitemapComponent::sitemapFactory($this->getApplication())->createGenerator()->generate();
         } catch (\Throwable $e) {
             $this->logTask('The sitemap was not generated: ' . $e->getMessage(), 'error');
 

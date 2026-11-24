@@ -14,7 +14,7 @@ use Joomla\CMS\Application\CMSWebApplicationInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Service\SitemapFactory;
 use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
 use QrzLite\Component\Sitemap\Administrator\Storage\SitemapFiles;
 
@@ -27,7 +27,16 @@ class DashboardModel extends BaseDatabaseModel
     /** @var  array{0: string, 1: string}|null  Site URL and the reason it is not known. */
     private ?array $siteUrl = null;
 
-    private ?Generator $generator = null;
+    private SitemapFactory $sitemapFactory;
+
+    /**
+     * The display controller gives the model the sitemap services.
+     */
+    public function setSitemapFactory(SitemapFactory $factory): void
+    {
+        $this->sitemapFactory = $factory;
+        $this->siteUrl        = null;
+    }
 
     protected function populateState(): void
     {
@@ -63,9 +72,10 @@ class DashboardModel extends BaseDatabaseModel
     public function getFiles(): array
     {
         $siteUrl = $this->getSiteUrl();
+        $layout  = new SitemapFiles($this->sitemapFactory->createSite()->root, $this->sitemapFactory->createOptions()->filename);
         $files   = [];
 
-        foreach ((new SitemapFiles(JPATH_ROOT, $this->generator()->filename()))->existing() as $path) {
+        foreach ($layout->existing() as $path) {
             $files[] = [
                 'name' => basename($path),
                 'url'  => $siteUrl !== '' ? $siteUrl . '/' . basename($path) : '',
@@ -102,17 +112,12 @@ class DashboardModel extends BaseDatabaseModel
     {
         if ($this->siteUrl === null) {
             try {
-                $this->siteUrl = [$this->generator()->siteUrl(), ''];
+                $this->siteUrl = [$this->sitemapFactory->createSite()->siteUrl($this->sitemapFactory->createOptions()->siteUrl), ''];
             } catch (\RuntimeException $e) {
                 $this->siteUrl = ['', $e->getMessage()];
             }
         }
 
         return $this->siteUrl;
-    }
-
-    private function generator(): Generator
-    {
-        return $this->generator ??= Generator::create();
     }
 }

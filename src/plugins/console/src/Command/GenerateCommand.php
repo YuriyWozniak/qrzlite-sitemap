@@ -12,7 +12,7 @@ namespace QrzLite\Plugin\Console\Sitemap\Command;
 
 use Joomla\Console\Command\AbstractCommand;
 use Joomla\Registry\Registry;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Service\SitemapFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -27,6 +27,11 @@ class GenerateCommand extends AbstractCommand
      * @var  string
      */
     protected static $defaultName = 'qrzlite-sitemap:generate';
+
+    public function __construct(private readonly SitemapFactory $factory)
+    {
+        parent::__construct();
+    }
 
     protected function configure(): void
     {
@@ -69,7 +74,7 @@ EOF
                 throw new \RuntimeException('No such folder: ' . $folder);
             }
 
-            $result = Generator::create($overrides)->generate(!$dryRun, $folder === null ? null : (string) $folder);
+            $result = $this->factory->createGenerator($overrides)->generate(!$dryRun, $folder === null ? null : (string) $folder);
         } catch (\Throwable $e) {
             $io->error($e->getMessage());
 

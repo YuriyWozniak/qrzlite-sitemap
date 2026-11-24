@@ -4,7 +4,6 @@ namespace QrzLite\Tests\Unit\Service;
 
 use Joomla\CMS\Application\AdministratorApplication;
 use Joomla\Registry\Registry;
-use PHPUnit\Framework\Attributes\DataProvider;
 use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
 use QrzLite\Component\Sitemap\Administrator\Service\Generator;
 use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
@@ -43,9 +42,17 @@ final class GeneratorTest extends JoomlaTestCase
         $this->component(SitemapComponent::NAME, $options);
     }
 
+    /**
+     * The generator as the component gives it.
+     */
+    private function generator(?Registry $overrides = null): Generator
+    {
+        return $this->sitemapFactory()->createGenerator($overrides);
+    }
+
     public function testGenerateWritesTheSitemapAndSavesTheLinks(): void
     {
-        $result = Generator::create()->generate();
+        $result = $this->generator()->generate();
         $file   = JPATH_ROOT . '/sitemap.xml';
 
         $this->assertSame(self::SITE_URL, $result->siteUrl);
@@ -82,7 +89,7 @@ final class GeneratorTest extends JoomlaTestCase
     {
         $this->insert(LinkRepository::TABLE, [['path' => '/old', 'title' => 'Old']]);
 
-        $result = Generator::create()->generate(false);
+        $result = $this->generator()->generate(false);
 
         $this->assertSame(4, $result->count());
         $this->assertSame([], $result->files);
@@ -97,7 +104,7 @@ final class GeneratorTest extends JoomlaTestCase
         $folder = JPATH_ROOT . '/out';
         mkdir($folder);
 
-        $result = Generator::create()->generate(true, $folder);
+        $result = $this->generator()->generate(true, $folder);
 
         $this->assertFileExists($folder . '/sitemap.xml');
         $this->assertFileDoesNotExist(JPATH_ROOT . '/sitemap.xml');
@@ -109,7 +116,7 @@ final class GeneratorTest extends JoomlaTestCase
     {
         $this->options(['filename' => 'map', 'changefreq' => 'daily', 'include_articles' => 0]);
 
-        $result = Generator::create(new Registry(['include_categories' => 0, 'changefreq' => '', 'priority' => '', 'xsl' => 0]))->generate();
+        $result = $this->generator(new Registry(['include_categories' => 0, 'changefreq' => '', 'priority' => '', 'xsl' => 0]))->generate();
         $xml    = (string) file_get_contents(JPATH_ROOT . '/map.xml');
 
         $this->assertSame(['/', '/news'], self::paths(JPATH_ROOT . '/map.xml'));
@@ -123,7 +130,7 @@ final class GeneratorTest extends JoomlaTestCase
     {
         $this->options(['include_menu' => 0]);
 
-        Generator::create()->generate();
+        $this->generator()->generate();
 
         $this->assertSame(self::sitePaths(), self::paths(JPATH_ROOT . '/sitemap.xml'));
         $this->assertSame(['Test Site', 'News'], \array_slice(array_column($this->rows(LinkRepository::TABLE), 'title'), 0, 2));
@@ -133,7 +140,7 @@ final class GeneratorTest extends JoomlaTestCase
     {
         $this->options(['exclude' => "/news/\n"]);
 
-        $result = Generator::create()->generate(false);
+        $result = $this->generator()->generate(false);
 
         $this->assertSame(['/', '/news'], array_column($result->entries, 'path'));
         $this->assertContains(['article #1 First /news/first', 'filter "/news/"'], $result->exclusions);
@@ -143,11 +150,11 @@ final class GeneratorTest extends JoomlaTestCase
     {
         $this->routes['index.php?option=com_content&view=article&id=1:first&catid=2'] = '/component/content/article/first';
 
-        $this->assertSame(['/', '/news', '/news/second'], array_column(Generator::create()->generate(false)->entries, 'path'));
+        $this->assertSame(['/', '/news', '/news/second'], array_column($this->generator()->generate(false)->entries, 'path'));
 
         // Saved empty: no filter at all.
         $this->options(['exclude' => '', 'changefreq' => '', 'priority' => '']);
-        $result = Generator::create()->generate();
+        $result = $this->generator()->generate();
         $xml    = (string) file_get_contents($result->files[0]);
 
         $this->assertSame(['/', '/component/content/article/first', '/news', '/news/second'], array_column($result->entries, 'path'));
@@ -160,17 +167,17 @@ final class GeneratorTest extends JoomlaTestCase
         $this->insert('#__content', [['id' => 7, 'title' => 'Archived', 'alias' => 'archived', 'catid' => 2, 'state' => 2]]);
         $this->routes['index.php?option=com_content&view=article&id=7:archived&catid=2'] = '/news/archived';
 
-        $this->assertNotContains('/news/archived', array_column(Generator::create()->generate(false)->entries, 'path'));
+        $this->assertNotContains('/news/archived', array_column($this->generator()->generate(false)->entries, 'path'));
 
         $this->options(['include_archived' => 1]);
-        $this->assertContains('/news/archived', array_column(Generator::create()->generate(false)->entries, 'path'));
+        $this->assertContains('/news/archived', array_column($this->generator()->generate(false)->entries, 'path'));
     }
 
     public function testSiteWideNoindexLeavesOnlyTheHomePage(): void
     {
         $this->app(AdministratorApplication::class, ['live_site' => self::SITE_URL, 'robots' => 'noindex, nofollow']);
 
-        $this->assertSame(['/'], array_column(Generator::create()->generate(false)->entries, 'path'));
+        $this->assertSame(['/'], array_column($this->generator()->generate(false)->entries, 'path'));
     }
 
     public function testLargeSitemapsAreSplitAndSavedInBatches(): void
@@ -185,7 +192,7 @@ final class GeneratorTest extends JoomlaTestCase
         $this->insert('#__content', $rows);
         $this->options(['split_limit' => 200]);
 
-        $result = Generator::create()->generate();
+        $result = $this->generator()->generate();
 
         $this->assertSame(254, $result->count());
         $this->assertSame(['sitemap_1.xml', 'sitemap_2.xml', 'sitemap.xml'], array_map('basename', $result->files));
@@ -201,7 +208,7 @@ final class GeneratorTest extends JoomlaTestCase
         )->execute();
 
         try {
-            Generator::create()->generate();
+            $this->generator()->generate();
             $this->fail('No exception');
         } catch (\RuntimeException $e) {
             $this->assertStringContainsString('no insert', $e->getMessage());
@@ -213,7 +220,7 @@ final class GeneratorTest extends JoomlaTestCase
     public function testStylesheetFollowsTheSiteLanguage(): void
     {
         $this->component('com_languages', ['site' => 'uk-UA']);
-        $generated = static fn () => (string) file_get_contents(Generator::create()->generate()->files[0]);
+        $generated = fn () => (string) file_get_contents($this->generator()->generate()->files[0]);
 
         $this->assertStringContainsString('/xsl/sitemap-en-GB.xsl', $generated());
 
@@ -238,61 +245,11 @@ final class GeneratorTest extends JoomlaTestCase
         ];
         $this->options(['include_categories' => 0]);
 
-        $result = Generator::create()->generate(false);
+        $result = $this->generator()->generate(false);
         $paths  = array_column($result->entries, 'path');
 
         $this->assertContains('/en/news/first', $paths);
         $this->assertContains('/uk/news/uk', $paths);
         $this->assertContains(['article #9 German', 'language de-DE not published'], $result->exclusions);
-    }
-
-    public function testFilenameDefaultsToSitemap(): void
-    {
-        $this->options(['filename' => '']);
-
-        $this->assertSame('sitemap', Generator::create()->filename());
-    }
-
-    public function testSiteUrlComesFromTheOptionThenLiveSiteThenTheRequest(): void
-    {
-        $this->options(['site_url' => ' https://www.example.org/sub/ ']);
-        $this->assertSame('https://www.example.org/sub', Generator::create()->siteUrl());
-
-        $this->options([]);
-        $this->assertSame(self::SITE_URL, Generator::create()->siteUrl());
-
-        $this->app(AdministratorApplication::class);
-        $_SERVER['HTTPS']       = 'on';
-        $_SERVER['HTTP_HOST']   = 'host.test';
-        $_SERVER['REQUEST_URI'] = '/site/';
-        $_SERVER['PHP_SELF']    = '/site/index.php';
-        $_SERVER['SCRIPT_NAME'] = '/site/index.php';
-
-        $this->assertSame('https://host.test/site', Generator::create()->siteUrl());
-    }
-
-    /**
-     * @return  array<string, array{string}>
-     */
-    public static function invalidSiteUrls(): array
-    {
-        return [
-            'no scheme'      => ['example.com'],
-            'other scheme'   => ['ftp://example.com'],
-            'query'          => ['https://example.com/?a=1'],
-            'space'          => ['https://exa mple.com'],
-            'joomla.invalid' => ['https://joomla.invalid'],
-        ];
-    }
-
-    #[DataProvider('invalidSiteUrls')]
-    public function testInvalidSiteUrlsAreRefused(string $url): void
-    {
-        $this->options(['site_url' => $url]);
-
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('The site URL is not known');
-
-        Generator::create()->generate(false);
     }
 }

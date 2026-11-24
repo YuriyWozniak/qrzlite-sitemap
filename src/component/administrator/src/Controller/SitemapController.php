@@ -16,7 +16,6 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
 use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
 
 /**
  * The "Generate now" button of the dashboard.
@@ -32,7 +31,7 @@ class SitemapController extends BaseController
         }
 
         try {
-            $result = Generator::create()->generate();
+            $result = SitemapComponent::sitemapFactory($this->app)->createGenerator()->generate();
 
             if ($this->app instanceof CMSWebApplicationInterface) {
                 $this->app->setUserState(SitemapComponent::NAME . '.exclusions', $result->exclusions);

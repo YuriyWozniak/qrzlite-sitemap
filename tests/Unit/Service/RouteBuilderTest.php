@@ -5,6 +5,7 @@ namespace QrzLite\Tests\Unit\Service;
 use Joomla\CMS\Application\AdministratorApplication;
 use Joomla\CMS\Application\SiteApplication;
 use Joomla\CMS\Event\Application\AfterInitialiseEvent;
+use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Router\SiteRouter;
 use Joomla\CMS\Uri\Uri;
@@ -14,6 +15,18 @@ use QrzLite\Tests\Support\JoomlaTestCase;
 
 final class RouteBuilderTest extends JoomlaTestCase
 {
+    /**
+     * A route builder for the current application, with the site router of the tests unless one is given.
+     */
+    private function builder(?SiteRouter $router = null): RouteBuilder
+    {
+        return new RouteBuilder(
+            $router ?? $this->container->get(SiteRouter::class),
+            Factory::getApplication(),
+            fn (): SiteApplication => $this->container->get(SiteApplication::class)
+        );
+    }
+
     public function testPathsAreRelativeToTheSiteRoot(): void
     {
         $this->app(AdministratorApplication::class, ['live_site' => 'https://example.com/sub']);
@@ -23,7 +36,8 @@ final class RouteBuilderTest extends JoomlaTestCase
             'index.php?Itemid=3' => '/',
         ];
 
-        $build = new RouteBuilder('https://example.com/sub');
+        $build = $this->builder();
+        $build->prepare('https://example.com/sub');
 
         $this->assertSame('/sub', Uri::root(true));
         $this->assertSame('/news', $build('index.php?Itemid=1'));
@@ -39,7 +53,7 @@ final class RouteBuilderTest extends JoomlaTestCase
         $router->method('getRules')->willReturn([]);
         $router->method('build')->willReturn(new Uri('/elsewhere/page'));
 
-        $this->assertSame('/elsewhere/page', (new RouteBuilder('https://example.com/sub', $router))('index.php?Itemid=1'));
+        $this->assertSame('/elsewhere/page', $this->builder($router)('index.php?Itemid=1'));
     }
 
     public function testTheConsoleGetsTheSitePathAsItsRequest(): void
@@ -47,15 +61,18 @@ final class RouteBuilderTest extends JoomlaTestCase
         $this->app(AdministratorApplication::class);
         $_SERVER['REQUEST_URI'] = '';
 
-        new RouteBuilder('https://example.com/sub/');
+        $builder = $this->builder();
+        $this->assertSame('', $_SERVER['REQUEST_URI'], 'Only prepare() changes the request');
+
+        $builder->prepare('https://example.com/sub/');
         $this->assertSame('/sub/', $_SERVER['REQUEST_URI']);
 
         $_SERVER['REQUEST_URI'] = '';
-        new RouteBuilder('https://example.com');
+        $this->builder()->prepare('https://example.com');
         $this->assertSame('/', $_SERVER['REQUEST_URI']);
 
         $_SERVER['REQUEST_URI'] = '/administrator/index.php';
-        new RouteBuilder('https://example.com/sub');
+        $this->builder()->prepare('https://example.com/sub');
         $this->assertSame('/administrator/index.php', $_SERVER['REQUEST_URI']);
     }
 
@@ -68,7 +85,7 @@ final class RouteBuilderTest extends JoomlaTestCase
         $app->expects($this->once())->method('bootPlugin')->with('languagefilter', 'system')->willReturn($filter);
         $this->container->share(SiteApplication::class, $site);
 
-        new RouteBuilder(self::SITE_URL);
+        $this->builder()->prepare(self::SITE_URL);
 
         $this->assertNotNull($filter->event);
         $this->assertSame($site, $filter->event->getApplication());
@@ -83,7 +100,7 @@ final class RouteBuilderTest extends JoomlaTestCase
         $router = $this->createMock(SiteRouter::class);
         $router->method('getRules')->willReturn(['buildpreprocess' => [[new FakeLanguageFilter(), 'buildRule']]]);
 
-        new RouteBuilder(self::SITE_URL, $router);
+        $this->builder($router)->prepare(self::SITE_URL);
     }
 
     public function testMonolingualSitesNeedNoLanguageFilter(): void
@@ -91,7 +108,7 @@ final class RouteBuilderTest extends JoomlaTestCase
         $app = $this->app(AdministratorApplication::class);
         $app->expects($this->never())->method('bootPlugin');
 
-        new RouteBuilder(self::SITE_URL);
+        $this->builder()->prepare(self::SITE_URL);
     }
 
     public function testAPluginWithoutTheHandlerIsIgnored(): void
@@ -100,7 +117,7 @@ final class RouteBuilderTest extends JoomlaTestCase
         $app = $this->app(AdministratorApplication::class);
         $app->expects($this->once())->method('bootPlugin')->willReturn($this->createMock(CMSPlugin::class));
 
-        new RouteBuilder(self::SITE_URL);
+        $this->builder()->prepare(self::SITE_URL);
     }
 }
 
