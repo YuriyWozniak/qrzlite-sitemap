@@ -70,6 +70,22 @@ final class SitemapXmlTest extends TestCase
         $this->assertStringContainsString('<loc>https://example.com/search?q=a&amp;b=c%20d</loc>', $xml);
     }
 
+    public function testALongUrlsetWrittenInPiecesIsOneDocument(): void
+    {
+        $entries = [];
+
+        for ($i = 1; $i <= 2500; $i++) {
+            $entries[] = new Entry('/item-' . $i, 'Item ' . $i);
+        }
+
+        $xml = (new SitemapXml('weekly'))->urlset('https://example.com', $entries);
+
+        self::validate($xml, 'sitemap.xsd');
+        $this->assertSame(1, substr_count($xml, '<?xml '));
+        $this->assertSame(2500, substr_count($xml, "\n <url>\n  <loc>https://example.com/item-"), 'every URL indented alike');
+        $this->assertStringEndsWith("<loc>https://example.com/item-2500</loc>\n  <changefreq>weekly</changefreq>\n </url>\n</urlset>\n", $xml);
+    }
+
     public function testOptionalElementsAndCommentsCanBeLeftOut(): void
     {
         $xml = (new SitemapXml())->urlset('https://example.com', [new Entry('/', 'Home')]);
