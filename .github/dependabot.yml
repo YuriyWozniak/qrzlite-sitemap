@@ -1,0 +1,33 @@
+# Weekly update pull requests, one per ecosystem, for the CI actions and the development tools.
+# The component itself has no third-party dependencies.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+    commit-message:
+      prefix: CI
+
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      php-tools:
+        patterns: ['*']
+    commit-message:
+      prefix: Dev tools
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      linters:
+        patterns: ['*']
+    commit-message:
+      prefix: Dev tools
