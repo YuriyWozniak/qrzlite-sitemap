@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\Registry\Registry;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
 
 /**
  * The HTML sitemap page.
@@ -41,7 +42,7 @@ class HtmlView extends BaseHtmlView
 
         $app     = Factory::getApplication();
         $menu    = $app instanceof SiteApplication ? $app->getMenu()->getActive() : null;
-        $current = $menu && ($menu->query['option'] ?? '') === 'com_qrzlitesitemap';
+        $current = $menu && ($menu->query['option'] ?? '') === SitemapComponent::NAME;
         $title   = $current ? $menu->title : Text::_('COM_QRZLITESITEMAP_SITEMAP');
 
         $this->heading = (string) ($this->params->get('page_heading') ?: $title);

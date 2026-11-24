@@ -10,23 +10,21 @@ namespace QrzLite\Component\Sitemap\Administrator\View\Dashboard;
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Application\CMSWebApplicationInterface;
 use Joomla\CMS\Document\HtmlDocument;
-use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
-use Joomla\Database\DatabaseInterface;
-use QrzLite\Component\Sitemap\Administrator\Service\Generator;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
+use QrzLite\Component\Sitemap\Administrator\Model\DashboardModel;
 
 /**
  * Status of the sitemap: files, number of links, what the last generation left out.
  */
 class HtmlView extends BaseHtmlView
 {
-    /** @var  string  Site URL, or the reason it is not known. */
     protected string $siteUrl = '';
 
+    /** @var  string  Why the site URL is not known. */
     protected string $siteUrlError = '';
 
     /** @var  array<int, array{name: string, url: string, size: int, time: int}> */
@@ -39,36 +37,14 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
-        $generator = Generator::create();
+        /** @var DashboardModel $model */
+        $model = $this->getModel();
 
-        try {
-            $this->siteUrl = $generator->siteUrl();
-        } catch (\RuntimeException $e) {
-            $this->siteUrlError = $e->getMessage();
-        }
-
-        $name  = $generator->filename();
-        $paths = array_merge([JPATH_ROOT . '/' . $name . '.xml'], glob(JPATH_ROOT . '/' . $name . '_*.xml') ?: []);
-
-        foreach ($paths as $path) {
-            if (is_file($path)) {
-                $this->files[] = [
-                    'name' => basename($path),
-                    'url'  => $this->siteUrl !== '' ? $this->siteUrl . '/' . basename($path) : '',
-                    'size' => (int) filesize($path),
-                    'time' => (int) filemtime($path),
-                ];
-            }
-        }
-
-        $db          = Factory::getContainer()->get(DatabaseInterface::class);
-        $this->links = (int) $db->setQuery('SELECT COUNT(*) FROM ' . $db->quoteName(Generator::TABLE))->loadResult();
-
-        $app = Factory::getApplication();
-
-        if ($app instanceof CMSWebApplicationInterface) {
-            $this->exclusions = (array) $app->getUserState(Generator::COMPONENT . '.exclusions', []);
-        }
+        $this->siteUrl      = $model->getSiteUrl();
+        $this->siteUrlError = $model->getSiteUrlError();
+        $this->files        = $model->getFiles();
+        $this->links        = $model->getLinks();
+        $this->exclusions   = $model->getExclusions();
 
         $this->addToolbar();
 
@@ -88,8 +64,8 @@ class HtmlView extends BaseHtmlView
         $toolbar = $document->getToolbar();
         $toolbar->standardButton('refresh', 'COM_QRZLITESITEMAP_GENERATE', 'sitemap.generate')->listCheck(false);
 
-        if ($this->getCurrentUser()->authorise('core.admin', Generator::COMPONENT)) {
-            $toolbar->preferences(Generator::COMPONENT);
+        if ($this->getCurrentUser()->authorise('core.admin', SitemapComponent::NAME)) {
+            $toolbar->preferences(SitemapComponent::NAME);
         }
     }
 }

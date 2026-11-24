@@ -18,15 +18,16 @@ use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
+use QrzLite\Component\Sitemap\Administrator\Extension\SitemapComponent;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Assembler;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\CandidateBuilder;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\CategoryTree;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Context;
-use QrzLite\Component\Sitemap\Administrator\Sitemap\Entry;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\FileWriter;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\PathFilter;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Publisher;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\SitemapXml;
+use QrzLite\Component\Sitemap\Administrator\Storage\LinkRepository;
 
 /**
  * Generates the sitemap of the current site: reads the content, routes it, writes the XML files into the
@@ -35,10 +36,6 @@ use QrzLite\Component\Sitemap\Administrator\Sitemap\SitemapXml;
  */
 final class Generator
 {
-    public const COMPONENT = 'com_qrzlitesitemap';
-
-    public const TABLE = '#__qrzlitesitemap_links';
-
     /** Default of the URL filter (as in config.xml; the options are empty until they are saved once). */
     public const DEFAULT_EXCLUDE = "/component/\n?view=";
 
@@ -55,7 +52,7 @@ final class Generator
      */
     public static function create(?Registry $overrides = null): self
     {
-        $params = clone ComponentHelper::getParams(self::COMPONENT);
+        $params = clone ComponentHelper::getParams(SitemapComponent::NAME);
 
         // Not Registry::merge(), which skips empty values: an override "" turns an option off.
         foreach ($overrides?->toArray() ?? [] as $name => $value) {
@@ -124,7 +121,7 @@ final class Generator
                 ->publish($folder ?? $this->root, $this->filename(), $siteUrl, $assembly->entries, $now);
 
             if ($folder === null) {
-                $this->store($assembly->entries);
+                (new LinkRepository($this->db))->replace($assembly->entries);
                 $stored = true;
             }
         }
@@ -190,47 +187,9 @@ final class Generator
      */
     private function stylesheet(string $siteUrl, string $language): string
     {
-        $folder = '/media/' . self::COMPONENT . '/xsl/';
+        $folder = '/media/' . SitemapComponent::NAME . '/xsl/';
         $file   = is_file($this->root . $folder . 'sitemap-' . $language . '.xsl') ? 'sitemap-' . $language . '.xsl' : 'sitemap-en-GB.xsl';
 
         return $siteUrl . $folder . $file;
-    }
-
-    /**
-     * Save the links for the HTML sitemap page, replacing the previous ones.
-     *
-     * @param   Entry[]  $entries
-     */
-    private function store(array $entries): void
-    {
-        $db = $this->db;
-        $db->transactionStart();
-
-        try {
-            $db->setQuery('DELETE FROM ' . $db->quoteName(self::TABLE))->execute();
-
-            foreach (array_chunk($entries, 200) as $chunk) {
-                $query = method_exists($db, 'createQuery') ? $db->createQuery() : $db->getQuery(true);
-                $query->insert($db->quoteName(self::TABLE))
-                    ->columns($db->quoteName(['path', 'title', 'level', 'lastmod']));
-
-                foreach ($chunk as $entry) {
-                    $query->values(implode(',', [
-                        $db->quote(mb_substr($entry->path, 0, 2048)),
-                        $db->quote(mb_substr($entry->title, 0, 400)),
-                        (int) $entry->level(),
-                        $entry->lastmod === null ? 'NULL' : $db->quote($entry->lastmod->format('Y-m-d H:i:s')),
-                    ]));
-                }
-
-                $db->setQuery($query)->execute();
-            }
-
-            $db->transactionCommit();
-        } catch (\Throwable $e) {
-            $db->transactionRollback();
-
-            throw $e;
-        }
     }
 }

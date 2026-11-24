@@ -90,13 +90,14 @@ final class PublisherTest extends TestCase
     {
         $this->publisher(2)->publish($this->dir, 'sitemap', 'https://example.com', self::entries(5), new \DateTimeImmutable());
         file_put_contents($this->dir . '/sitemap_extra.xml', 'not ours');
+        file_put_contents($this->dir . '/sitemap_old_9.xml', 'not ours either');
 
         $result = $this->publisher(2)->publish($this->dir, 'sitemap', 'https://example.com', self::entries(3), new \DateTimeImmutable());
-        $this->assertSame(['sitemap.xml', 'sitemap_1.xml', 'sitemap_2.xml', 'sitemap_extra.xml'], $this->files());
+        $this->assertSame(['sitemap.xml', 'sitemap_1.xml', 'sitemap_2.xml', 'sitemap_extra.xml', 'sitemap_old_9.xml'], $this->files());
         $this->assertSame([$this->dir . '/sitemap_3.xml'], $result['deleted']);
 
         $this->publisher()->publish($this->dir, 'sitemap', 'https://example.com', self::entries(3), new \DateTimeImmutable());
-        $this->assertSame(['sitemap.xml', 'sitemap_extra.xml'], $this->files());
+        $this->assertSame(['sitemap.xml', 'sitemap_extra.xml', 'sitemap_old_9.xml'], $this->files());
         $this->assertSame('urlset', simplexml_load_file($this->dir . '/sitemap.xml')->getName());
     }
 
