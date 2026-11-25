@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 - 2026-11
+
+- Links to the HTML sitemap menu item no longer end in `?view=html`: the site router has the component's own name,
+  so Joomla's menu rules match its menu items. The XML sitemap lists the page under that address, also when the URL
+  filter leaves out `?view=`.
+
 ## 1.0.0 - 2026-11
 
 First version.

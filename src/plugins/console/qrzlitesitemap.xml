@@ -6,7 +6,7 @@
     <copyright>(C) 2026 Yuriy Wozniak</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE</license>
     <authorUrl>https://github.com/YuriyWozniak/qrzlite-sitemap</authorUrl>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <description>PLG_CONSOLE_QRZLITESITEMAP_XML_DESCRIPTION</description>
     <namespace path="src">QrzLite\Plugin\Console\Sitemap</namespace>
     <files>
