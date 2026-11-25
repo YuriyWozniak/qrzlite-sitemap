@@ -10,6 +10,7 @@ First version.
 - Generation from the administrator, the Joomla console (`qrzlite-sitemap:generate`) and the Joomla Scheduler.
 - Correct addresses from the console and the scheduler, language prefixes on multilingual sites.
 - Atomic file writing, with an in-place fallback for read-only site roots.
+- Articles are read and routed 1,000 at a time, so large sites stay within a usual PHP memory limit.
 - Options saved empty stay empty: *None* for `changefreq` and `priority` leaves them out, an emptied URL filter
   filters nothing. A `--options` file can turn options off with `""`.
 - Unit tests for the whole component against Joomla 5.4 and 6.2; PHP, HTML and CSS linters.

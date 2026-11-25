@@ -300,4 +300,29 @@ final class CandidateBuilderTest extends TestCase
         $this->assertSame('language ru-RU not published', $items[2]->excluded);
         $this->assertSame('index.php?Itemid=104&lang=uk-UA', $items[3]->route, 'all-language items use the default language');
     }
+
+    public function testArticlesAreTakenOneAtATimeBeforeCategoriesAndMenuItems(): void
+    {
+        $read = 0;
+        $rows = (static function () use (&$read): \Generator {
+            foreach ([self::article(1), self::article(2, ['state' => 0])] as $row) {
+                ++$read;
+
+                yield $row;
+            }
+        })();
+
+        $candidates = $this->builder()->candidates($rows, self::CATEGORIES, [
+            self::menu(110, ['link' => 'index.php?option=com_content&view=article&id=2']),
+        ]);
+
+        $this->assertSame(0, $read, 'nothing is read before it is asked for');
+        $this->assertSame('article #1 Article 1', $candidates->current()->describe());
+        $this->assertSame(1, $read, 'articles are read one at a time');
+
+        $all = iterator_to_array($candidates, false);
+
+        $this->assertMatchesRegularExpression('/^(article )+(category )+menu $/', implode('', array_map(static fn (Candidate $c) => $c->type . ' ', $all)));
+        $this->assertSame('article #2 unpublished', $all[\count($all) - 1]->excluded, 'menu items still see the articles they open');
+    }
 }

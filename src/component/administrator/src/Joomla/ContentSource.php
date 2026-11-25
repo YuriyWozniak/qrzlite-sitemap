@@ -18,8 +18,17 @@ use Joomla\Database\QueryInterface;
  */
 final class ContentSource
 {
-    public function __construct(private readonly DatabaseInterface $db)
+    /** Articles read with one query. */
+    public const PAGE_SIZE = 1000;
+
+    /**
+     * @param   int  $pageSize  Articles read with one query.
+     */
+    public function __construct(private readonly DatabaseInterface $db, private readonly int $pageSize = self::PAGE_SIZE)
     {
+        if ($pageSize < 1) {
+            throw new \InvalidArgumentException('The page size must be at least 1.');
+        }
     }
 
     /**
@@ -64,22 +73,40 @@ final class ContentSource
     }
 
     /**
-     * All articles except trashed ones.
+     * All articles except trashed ones, by id.
      *
-     * @return  array<int, array<string, mixed>>
+     * They are read a page at a time, so that only one page is in memory: the database client keeps the whole
+     * result of a query, and a large site has more articles than fit in a usual memory limit.
+     *
+     * @return  \Generator<int, array<string, mixed>>
      */
-    public function articles(): array
+    public function articles(): \Generator
     {
-        $db    = $this->db;
-        $query = $this->query()
-            ->select($db->quoteName(
-                ['id', 'title', 'alias', 'catid', 'state', 'access', 'publish_up', 'publish_down', 'created', 'modified', 'metadata', 'language']
-            ))
-            ->from($db->quoteName('#__content'))
-            ->where($db->quoteName('state') . ' <> -2')
-            ->order($db->quoteName('id'));
+        $db   = $this->db;
+        $last = 0;
 
-        return $db->setQuery($query)->loadAssocList();
+        do {
+            $query = $this->query()
+                ->select($db->quoteName(
+                    ['id', 'title', 'alias', 'catid', 'state', 'access', 'publish_up', 'publish_down', 'created', 'modified', 'metadata', 'language']
+                ))
+                ->from($db->quoteName('#__content'))
+                ->where($db->quoteName('state') . ' <> -2')
+                ->where($db->quoteName('id') . ' > ' . $last)
+                ->order($db->quoteName('id'))
+                ->setLimit($this->pageSize);
+
+            $rows  = $db->setQuery($query)->loadAssocList();
+            $count = \count($rows);
+
+            foreach ($rows as $row) {
+                $last = (int) $row['id'];
+
+                yield $row;
+            }
+
+            unset($rows);
+        } while ($count === $this->pageSize);
     }
 
     /**

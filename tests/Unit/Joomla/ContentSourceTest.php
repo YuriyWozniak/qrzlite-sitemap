@@ -2,6 +2,7 @@
 
 namespace QrzLite\Tests\Unit\Joomla;
 
+use Joomla\Database\Monitor\DebugMonitor;
 use QrzLite\Component\Sitemap\Administrator\Joomla\ContentSource;
 use QrzLite\Tests\Support\JoomlaTestCase;
 
@@ -62,13 +63,57 @@ final class ContentSourceTest extends JoomlaTestCase
             ['id' => 4, 'title' => 'Archived', 'state' => 2],
         ]);
 
-        $rows = (new ContentSource($this->db))->articles();
+        $rows = iterator_to_array((new ContentSource($this->db))->articles(), false);
 
         $this->assertSame([1, 3, 4], array_map('intval', array_column($rows, 'id')));
         $this->assertSame(
             ['id', 'title', 'alias', 'catid', 'state', 'access', 'publish_up', 'publish_down', 'created', 'modified', 'metadata', 'language'],
             array_keys($rows[0])
         );
+    }
+
+    public function testArticlesAreReadInPages(): void
+    {
+        $this->insert('#__content', array_map(
+            static fn (int $id) => ['id' => $id, 'title' => 'Article ' . $id, 'state' => $id === 4 ? -2 : 1],
+            [7, 2, 4, 1, 9, 3, 5]
+        ));
+
+        $this->assertSame([1, 2, 3, 5, 7, 9], $this->articleIds(2, $queries));
+        $this->assertSame(4, $queries, 'six articles in pages of two: the fourth query finds none');
+
+        $this->assertSame([1, 2, 3, 5, 7, 9], $this->articleIds(4, $queries));
+        $this->assertSame(2, $queries, 'a page that is not full is the last one');
+    }
+
+    /**
+     * Ids of the articles read in pages of the given size, and the number of queries it took.
+     *
+     * @param-out  int  $queries
+     *
+     * @return  int[]
+     */
+    private function articleIds(int $pageSize, ?int &$queries): array
+    {
+        $this->db->setMonitor($monitor = new DebugMonitor());
+
+        $ids = [];
+
+        foreach ((new ContentSource($this->db, $pageSize))->articles() as $row) {
+            $ids[] = (int) $row['id'];
+        }
+
+        $queries = \count($monitor->getLogs());
+        $this->db->setMonitor(null);
+
+        return $ids;
+    }
+
+    public function testThePageSizeMustBePositive(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new ContentSource($this->db, 0);
     }
 
     public function testLanguagesArePublishedOnesAGuestMaySee(): void

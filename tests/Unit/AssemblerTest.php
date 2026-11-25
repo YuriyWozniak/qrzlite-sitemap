@@ -139,10 +139,10 @@ final class AssemblerTest extends TestCase
 
         $this->assertSame(['/', '/no-slash.html'], self::paths($result->entries));
         $this->assertSame([
+            ['menu #8 External', 'no URL'],
             ['article #6 Broken', 'routing failed: broken router'],
             ['article #7 Unknown', 'no URL'],
-            ['menu #8 External', 'no URL'],
-        ], $result->exclusions);
+        ], $result->exclusions, 'menu items are listed first, whatever the order of the candidates');
     }
 
     public function testEntryLevel(): void
