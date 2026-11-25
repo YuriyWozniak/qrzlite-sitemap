@@ -16,7 +16,8 @@ namespace QrzLite\Component\Sitemap\Administrator\Sitemap;
  *  - a URL of a noindex page is removed even when another candidate routes to it;
  *  - URLs matching the path filter are left out;
  *  - the site root "/" is always listed, home pages are never filtered;
- *  - the result is sorted by path.
+ *  - the result is sorted by path;
+ *  - what is left out is listed by kind: menu items, categories, articles.
  */
 final class Assembler
 {
@@ -26,6 +27,9 @@ final class Assembler
         Candidate::TYPE_CATEGORY => 2,
         Candidate::TYPE_ARTICLE  => 1,
     ];
+
+    /** Order of the kinds in the list of what is left out. */
+    private const EXCLUSION_ORDER = [Candidate::TYPE_MENU, Candidate::TYPE_CATEGORY, Candidate::TYPE_ARTICLE];
 
     /** @var \Closure(string): ?string */
     private \Closure $router;
@@ -49,34 +53,34 @@ final class Assembler
         // path => [title, title priority, lastmod]
         $urls       = ['/' => [$this->homeTitle, 0, null]];
         $blocked    = [];
-        $exclusions = [];
+        $exclusions = array_fill_keys(self::EXCLUSION_ORDER, []);
 
         foreach ($candidates as $candidate) {
             if (!$candidate->isIncluded() && !$candidate->blocks) {
-                $exclusions[] = [$candidate->describe(), $candidate->excluded];
+                $exclusions[$candidate->type][] = [$candidate->describe(), $candidate->excluded];
                 continue;
             }
 
             try {
                 $path = self::normalize(($this->router)($candidate->route));
             } catch (\Throwable $e) {
-                $exclusions[] = [$candidate->describe(), 'routing failed: ' . $e->getMessage()];
+                $exclusions[$candidate->type][] = [$candidate->describe(), 'routing failed: ' . $e->getMessage()];
                 continue;
             }
 
             if ($path === null) {
-                $exclusions[] = [$candidate->describe(), 'no URL'];
+                $exclusions[$candidate->type][] = [$candidate->describe(), 'no URL'];
                 continue;
             }
 
             if ($candidate->blocks) {
-                $blocked[$path] = true;
-                $exclusions[]   = [$candidate->describe() . ' ' . $path, $candidate->excluded];
+                $blocked[$path]                 = true;
+                $exclusions[$candidate->type][] = [$candidate->describe() . ' ' . $path, $candidate->excluded];
                 continue;
             }
 
             if (!$candidate->home && $path !== '/' && ($pattern = $this->filter->match($path)) !== null) {
-                $exclusions[] = [$candidate->describe() . ' ' . $path, 'filter "' . $pattern . '"'];
+                $exclusions[$candidate->type][] = [$candidate->describe() . ' ' . $path, 'filter "' . $pattern . '"'];
                 continue;
             }
 
@@ -102,11 +106,15 @@ final class Assembler
 
         $entries = [];
 
-        foreach ($urls as $path => [$title, , $lastmod]) {
+        // Each URL is dropped from the map as its entry is made, so that a large site doesn't have both in memory.
+        foreach (array_keys($urls) as $path) {
+            [$title, , $lastmod] = $urls[$path];
+            unset($urls[$path]);
+
             $entries[] = new Entry((string) $path, $title, $lastmod);
         }
 
-        return new Assembly($entries, $exclusions);
+        return new Assembly($entries, array_merge(...array_values($exclusions)));
     }
 
     /**

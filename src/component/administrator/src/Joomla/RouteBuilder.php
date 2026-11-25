@@ -29,6 +29,13 @@ use Joomla\CMS\Uri\Uri;
 final class RouteBuilder
 {
     /**
+     * Joomla's router keeps a copy of every URI it builds, for the rest of the request. A sitemap builds each
+     * URL once, so the copies only take memory: close to 90 MB on a site with 100,000 articles. Null when the
+     * router has no such cache.
+     */
+    private readonly ?\ReflectionProperty $cache;
+
+    /**
      * @param   CMSApplicationInterface     $app              The running application, which boots the language filter.
      * @param   \Closure(): SiteApplication  $siteApplication  Gives the site application, made only when needed.
      */
@@ -37,6 +44,13 @@ final class RouteBuilder
         private readonly CMSApplicationInterface $app,
         private readonly \Closure $siteApplication
     ) {
+        try {
+            $cache = new \ReflectionProperty($router, 'cache');
+        } catch (\ReflectionException) {
+            $cache = null;
+        }
+
+        $this->cache = $cache;
     }
 
     /**
@@ -59,7 +73,10 @@ final class RouteBuilder
 
     public function __invoke(string $route): string
     {
-        $path   = $this->router->build($route)->toString(['path', 'query', 'fragment']);
+        $path = $this->router->build($route)->toString(['path', 'query', 'fragment']);
+
+        $this->cache?->setValue($this->router, []);
+
         $prefix = Uri::root(true) . '/';
 
         if (str_starts_with($path, $prefix)) {

@@ -56,6 +56,33 @@ final class RouteBuilderTest extends JoomlaTestCase
         $this->assertSame('/elsewhere/page', $this->builder($router)('index.php?Itemid=1'));
     }
 
+    public function testTheRouterKeepsNoCopyOfTheUrisItBuilt(): void
+    {
+        $this->app(AdministratorApplication::class, ['live_site' => 'https://example.com']);
+
+        // Joomla's own build(), which keeps a copy of every URI it builds.
+        $router = new class () extends SiteRouter {
+            public function __construct()
+            {
+            }
+
+            protected function createUri(mixed $url): Uri
+            {
+                return new Uri((string) $url);
+            }
+        };
+        $cache = new \ReflectionProperty($router, 'cache');
+
+        $router->build('index.php?Itemid=1');
+        $this->assertCount(1, $cache->getValue($router), 'Joomla keeps a copy');
+
+        $build = $this->builder($router);
+
+        $this->assertSame('/index.php?Itemid=2', $build('index.php?Itemid=2'));
+        $this->assertSame('/index.php?Itemid=3', $build('index.php?Itemid=3'));
+        $this->assertSame([], $cache->getValue($router));
+    }
+
     public function testTheConsoleGetsTheSitePathAsItsRequest(): void
     {
         $this->app(AdministratorApplication::class);

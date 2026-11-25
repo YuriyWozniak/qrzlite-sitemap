@@ -15,6 +15,7 @@ use QrzLite\Component\Sitemap\Administrator\Joomla\ContentSource;
 use QrzLite\Component\Sitemap\Administrator\Joomla\RouteBuilder;
 use QrzLite\Component\Sitemap\Administrator\Joomla\SiteEnvironment;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Assembler;
+use QrzLite\Component\Sitemap\Administrator\Sitemap\Candidate;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\CandidateBuilder;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\Context;
 use QrzLite\Component\Sitemap\Administrator\Sitemap\PathFilter;
@@ -65,20 +66,17 @@ final class Generator
             $multi ? $default : ''
         );
 
-        $candidates = (new CandidateBuilder($context))->build(
+        $this->routes->prepare($siteUrl);
+
+        // Articles are read, routed and dropped one page at a time.
+        $candidates = (new CandidateBuilder($context))->candidates(
             $this->source->articles(),
             $this->source->categories(),
             $this->source->menuItems()
         );
 
-        $this->routes->prepare($siteUrl);
-
         $assembly = (new Assembler($this->routes, PathFilter::fromText($this->options->exclude), $this->site->siteName()))
-            ->assemble(array_merge(
-                $this->options->includeMenu ? $candidates->menuItems : [],
-                $this->options->includeCategories ? $candidates->categories : [],
-                $this->options->includeArticles ? $candidates->articles : []
-            ));
+            ->assemble($this->listed($candidates));
 
         $published = Published::nothing();
         $stored    = false;
@@ -111,6 +109,29 @@ final class Generator
             $stored,
             microtime(true) - $start
         );
+    }
+
+    /**
+     * The candidates of the kinds the options list. All of them are still built: categories and menu items
+     * depend on the articles.
+     *
+     * @param   iterable<Candidate>  $candidates
+     *
+     * @return  \Generator<int, Candidate>
+     */
+    private function listed(iterable $candidates): \Generator
+    {
+        $kinds = array_filter([
+            Candidate::TYPE_MENU     => $this->options->includeMenu,
+            Candidate::TYPE_CATEGORY => $this->options->includeCategories,
+            Candidate::TYPE_ARTICLE  => $this->options->includeArticles,
+        ]);
+
+        foreach ($candidates as $candidate) {
+            if (isset($kinds[$candidate->type])) {
+                yield $candidate;
+            }
+        }
     }
 
     /**

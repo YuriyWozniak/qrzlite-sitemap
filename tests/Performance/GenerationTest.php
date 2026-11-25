@@ -27,7 +27,7 @@ final class GenerationTest extends JoomlaTestCase
     private const CPU_BUDGET = 400;
 
     /** Bytes of memory per URL. */
-    private const MEMORY_BUDGET = 8192;
+    private const MEMORY_BUDGET = 4096;
 
     protected function setUp(): void
     {
