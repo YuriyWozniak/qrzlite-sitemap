@@ -52,7 +52,7 @@ Download `pkg_qrzlitesitemap-<version>.zip` from the
 Extensions*, or from the console:
 
 ```sh
-php cli/joomla.php extension:install --url=https://github.com/YuriyWozniak/qrzlite-sitemap/releases/download/v1.0.0/pkg_qrzlitesitemap-1.0.0.zip
+php cli/joomla.php extension:install --url=https://github.com/YuriyWozniak/qrzlite-sitemap/releases/download/v1.0.1/pkg_qrzlitesitemap-1.0.1.zip
 ```
 
 The package contains the component and two small plugins, *Console - QrzLite Sitemap* and *Task - QrzLite Sitemap*.

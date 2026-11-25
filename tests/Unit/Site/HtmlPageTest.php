@@ -41,15 +41,18 @@ final class HtmlPageTest extends JoomlaTestCase
         $this->plainRoutes('site');
 
         $active = $menuParams === null ? null : new MenuItem([
-            'id'     => 7,
-            'title'  => 'Site Map',
-            'link'   => 'index.php?option=com_qrzlitesitemap&view=html',
-            'query'  => ['option' => 'com_qrzlitesitemap', 'view' => 'html'],
-            'params' => new Registry($menuParams),
+            'id'        => 7,
+            'title'     => 'Site Map',
+            'link'      => 'index.php?option=com_qrzlitesitemap&view=html',
+            'query'     => ['option' => 'com_qrzlitesitemap', 'view' => 'html'],
+            'component' => 'com_qrzlitesitemap',
+            'language'  => '*',
+            'params'    => new Registry($menuParams),
         ]);
 
         $this->menu = $this->createMock(AbstractMenu::class);
         $this->menu->method('getActive')->willReturn($active);
+        $this->menu->method('getItem')->willReturn($active);
         $this->menu->method('getItems')->willReturn($active ? [$active] : []);
 
         $menus = $this->createMock(MenuFactoryInterface::class);
@@ -185,5 +188,17 @@ final class HtmlPageTest extends JoomlaTestCase
             ['MenuRules', 'StandardRules', 'NomenuRules'],
             array_map(static fn ($rule) => (new \ReflectionClass($rule))->getShortName(), $router->getRules())
         );
+    }
+
+    public function testTheLinkOfTheMenuItemIsJustTheMenuItem(): void
+    {
+        $this->site([]);
+
+        $router = new Router($this->app, $this->menu);
+        $query  = ['option' => 'com_qrzlitesitemap', 'view' => 'html', 'Itemid' => 7];
+
+        $this->assertSame([], $router->build($query));
+        $this->assertSame(['option' => 'com_qrzlitesitemap', 'Itemid' => 7], $query, 'no "?view=html" after the menu item path');
+        $this->assertSame('qrzlitesitemap', $router->getName());
     }
 }

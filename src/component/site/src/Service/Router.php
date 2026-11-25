@@ -25,6 +25,10 @@ class Router extends RouterView
 {
     public function __construct(?SiteApplication $app = null, ?AbstractMenu $menu = null)
     {
+        // Joomla takes the component name from the namespace, which would give "sitemap": the menu rules would then
+        // not match the menu items of com_qrzlitesitemap, and their links would keep "?view=html".
+        $this->name = 'qrzlitesitemap';
+
         $this->registerView(new RouterViewConfiguration('html'));
 
         parent::__construct($app, $menu);
