@@ -30,7 +30,7 @@ final class RouteBuilder
 {
     /**
      * Joomla's router keeps a copy of every URI it builds, for the rest of the request. A sitemap builds each
-     * URL once, so the copies only take memory: on a site with 100,000 articles, about 100 MB. Null when the
+     * URL once, so the copies only take memory: close to 90 MB on a site with 100,000 articles. Null when the
      * router has no such cache.
      */
     private readonly ?\ReflectionProperty $cache;
